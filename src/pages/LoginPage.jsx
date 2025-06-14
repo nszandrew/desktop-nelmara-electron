@@ -1,20 +1,22 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../contexts/AuthContext.jsx';
 import api from '../services/api';
+import { useNavigate } from 'react-router-dom';
 
 export default function LoginPage() {
   const { login } = useContext(AuthContext);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
     try {
-      const res = await api.post('/api/auth/login', { email, password });
+      const res = await api.post('/auth/login', { email, password });
       login(res.data.token);
-      window.location.href = '/';
+      navigate('/');
     } catch (err) {
       setError('Login inválido. Verifique os dados.');
     }
