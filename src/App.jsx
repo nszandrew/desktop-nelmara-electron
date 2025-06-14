@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage.jsx';
 import HomePage from './pages/HomePage.jsx';
 import PatientRegisterPage from './pages/PatientRegisterPage';
 import EditPatientPage from './pages/EditPatientPage.jsx';
+import PatientViewPage from './pages/PatientViewPage.jsx';
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = React.useContext(AuthContext);
@@ -19,6 +20,7 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register-patient" element={<PatientRegisterPage />} /> {/* ✅ nova rota */}
           <Route path="/edit-patient/:id" element={<EditPatientPage />} />
+          <Route path="/view-patient/:id" element={<PatientViewPage />} />
           <Route
             path="/"
             element={

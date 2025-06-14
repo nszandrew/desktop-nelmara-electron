@@ -83,7 +83,12 @@ export default function HomePage() {
                 <p>{p.phone}</p>
               </div>
               <div style={styles.cardActions}>
-                <button style={styles.action}>Ver</button>
+                <button
+                  style={styles.action}
+                  onClick={() => navigate(`/view-patient/${p.id}`)}
+                >
+                  Ver
+                </button>
                 <button
                   style={styles.action}
                   onClick={() => navigate(`/edit-patient/${p.id}`)}
