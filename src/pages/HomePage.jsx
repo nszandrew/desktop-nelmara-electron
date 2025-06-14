@@ -9,12 +9,35 @@ export default function HomePage() {
   const [totalPages, setTotalPages] = useState(1);
   const navigate = useNavigate();
 
+  const deletePatient = async (id) => {
+    const confirm = window.confirm(
+      "Tem certeza que deseja excluir este paciente?"
+    );
+    if (!confirm) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      await api.delete(`/patient/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      alert("Paciente excluído com sucesso!");
+      fetchPatients(); // atualiza a lista
+    } catch (err) {
+      console.error("Erro ao excluir paciente:", err);
+      alert("Erro ao excluir paciente.");
+    }
+  };
+
   const fetchPatients = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await api.get(`/patient?page=${page}&size=10&direction=desc`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get(
+        `/patient?page=${page}&size=10&direction=desc`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       setPatients(res.data.content || []);
       setTotalPages(res.data.totalPages || 1);
@@ -62,7 +85,7 @@ export default function HomePage() {
               <div style={styles.cardActions}>
                 <button style={styles.action}>Ver</button>
                 <button style={styles.action}>Editar</button>
-                <button style={styles.delete}>Excluir</button>
+                <button style={styles.delete} onClick={() => deletePatient(p.id)}>Excluir</button>
               </div>
             </div>
           ))}
