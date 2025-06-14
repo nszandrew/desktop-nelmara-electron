@@ -158,6 +158,20 @@ export default function EditPatientPage() {
         animation: "fadeIn 0.5s ease-in-out",
       }}
     >
+      <button
+        onClick={() => navigate("/")}
+        style={{
+          marginBottom: "1rem",
+          padding: "0.6rem 1.2rem",
+          backgroundColor: "#d3d3d3",
+          border: "none",
+          borderRadius: "8px",
+          fontWeight: "bold",
+          cursor: "pointer",
+        }}
+      >
+        ← Voltar para o Início
+      </button>
       <ProgressBar currentStep={step} totalSteps={steps.length} />
       <div style={{ minHeight: "400px", transition: "all 0.3s ease" }}>
         <CurrentStep

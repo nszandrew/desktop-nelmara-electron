@@ -5,7 +5,7 @@ import MedicalHistoryStep from "./registerSteps/MedicalHistoryStep";
 import LifestyleStep from "./registerSteps/LifestyleStep";
 import ProgressBar from "./registerSteps/ProgressBar";
 import api from "../services/api";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 
 export default function PatientRegisterPage() {
   const navigate = useNavigate();
@@ -90,7 +90,7 @@ export default function PatientRegisterPage() {
       });
 
       alert("Paciente registrado com sucesso!");
-      navigate('/');
+      navigate("/");
     } catch (err) {
       console.error("Erro ao registrar paciente:", err);
       alert("Erro ao registrar paciente.");
@@ -137,6 +137,20 @@ export default function PatientRegisterPage() {
 
   return (
     <div style={styles.container}>
+      <button
+        onClick={() => navigate("/")}
+        style={{
+          marginBottom: "1rem",
+          padding: "0.6rem 1.2rem",
+          backgroundColor: "#d3d3d3",
+          border: "none",
+          borderRadius: "8px",
+          fontWeight: "bold",
+          cursor: "pointer",
+        }}
+      >
+        ← Voltar para o Início
+      </button>
       <ProgressBar currentStep={step} totalSteps={steps.length} />
       <div style={styles.stepWrapper}>
         <CurrentStep
