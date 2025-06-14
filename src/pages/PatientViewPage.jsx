@@ -2,7 +2,14 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { motion } from "framer-motion";
-import { FaUser, FaHeartbeat, FaStethoscope, FaRunning, FaEdit, FaArrowLeft } from "react-icons/fa";
+import {
+  FaUser,
+  FaHeartbeat,
+  FaStethoscope,
+  FaRunning,
+  FaEdit,
+  FaArrowLeft,
+} from "react-icons/fa";
 
 export default function ViewPatientPage() {
   const { id } = useParams();
@@ -20,14 +27,49 @@ export default function ViewPatientPage() {
     fetchData();
   }, [id]);
 
-  if (!data) return <p style={{ textAlign: "center", color: "#fff" }}>Carregando...</p>;
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.innerHTML = `
+    @media print {
+      body {
+        background-color: white !important;
+        font-size: 12pt !important;
+        -webkit-print-color-adjust: exact !important;
+        color-adjust: exact !important;
+        margin: 0 !important;
+      }
+      button, nav, .no-print {
+        display: none !important;
+      }
+      section {
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+      * {
+        box-shadow: none !important;
+        background: none !important;
+        color: #000 !important;
+      }
+      html, body, div {
+        background-color: white !important;
+      }
+    }
+  `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
+  if (!data)
+    return <p style={{ textAlign: "center", color: "#fff" }}>Carregando...</p>;
 
   const sectionStyle = {
     marginBottom: "2rem",
     padding: "1.5rem",
     backgroundColor: "#ffffff",
     borderRadius: "12px",
-    boxShadow: "0 2px 10px rgba(0,0,0,0.1)"
+    boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
   };
 
   const titleStyle = {
@@ -62,9 +104,19 @@ export default function ViewPatientPage() {
           boxShadow: "0 8px 30px rgba(0,0,0,0.2)",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "2rem" }}>
+        <div
+          className="no-print"
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginBottom: "2rem",
+          }}
+        >
           <button onClick={() => navigate("/")} style={btn("gray")}>
             <FaArrowLeft /> Voltar
+          </button>
+          <button onClick={() => window.print()} style={btn("blue")}>
+            🖨️ Imprimir
           </button>
           <button onClick={() => navigate(`/edit/${id}`)} style={btn("green")}>
             <FaEdit /> Editar
@@ -72,47 +124,113 @@ export default function ViewPatientPage() {
         </div>
 
         <section style={sectionStyle}>
-          <div style={titleStyle}><FaUser /> Dados Pessoais</div>
-          <p><strong>Nome:</strong> {data.fullName}</p>
-          <p><strong>CPF:</strong> {data.cpf}</p>
-          <p><strong>Email:</strong> {data.email}</p>
-          <p><strong>Telefone:</strong> {data.phone}</p>
-          <p><strong>Gênero:</strong> {data.gender}</p>
-          <p><strong>Data de Nascimento:</strong> {formatDate(data.dateOfBirth)}</p>
-          <p><strong>Profissão:</strong> {data.profession}</p>
-          <p><strong>Indicação:</strong> {data.indication}</p>
-          <p><strong>Endereço:</strong> {data.address}</p>
+          <div style={titleStyle}>
+            <FaUser /> Dados Pessoais
+          </div>
+          <p>
+            <strong>Nome:</strong> {data.fullName}
+          </p>
+          <p>
+            <strong>CPF:</strong> {data.cpf}
+          </p>
+          <p>
+            <strong>Email:</strong> {data.email}
+          </p>
+          <p>
+            <strong>Telefone:</strong> {data.phone}
+          </p>
+          <p>
+            <strong>Gênero:</strong> {data.gender}
+          </p>
+          <p>
+            <strong>Data de Nascimento:</strong> {formatDate(data.dateOfBirth)}
+          </p>
+          <p>
+            <strong>Profissão:</strong> {data.profession}
+          </p>
+          <p>
+            <strong>Indicação:</strong> {data.indication}
+          </p>
+          <p>
+            <strong>Endereço:</strong> {data.address}
+          </p>
         </section>
 
         <section style={sectionStyle}>
-          <div style={titleStyle}><FaStethoscope /> Avaliação Clínica</div>
-          <p><strong>Data:</strong> {formatDate(data.evaluation?.date)}</p>
-          <p><strong>Queixa Principal:</strong> {data.evaluation?.mainComplaint}</p>
-          <p><strong>HMP:</strong> {data.evaluation?.hmp}</p>
-          <p><strong>HMA:</strong> {data.evaluation?.hma}</p>
-          <p><strong>Peso:</strong> {data.evaluation?.weight} kg</p>
-          <p><strong>Altura:</strong> {data.evaluation?.height} m</p>
-          <p><strong>Dor (0 a 10):</strong> {data.evaluation?.painLevel}</p>
-          <p><strong>Frequência Cardíaca:</strong> {data.evaluation?.heartRate}</p>
-          <p><strong>Frequência Respiratória:</strong> {data.evaluation?.respiratoryRate}</p>
+          <div style={titleStyle}>
+            <FaStethoscope /> Avaliação Clínica
+          </div>
+          <p>
+            <strong>Data:</strong> {formatDate(data.evaluation?.date)}
+          </p>
+          <p>
+            <strong>Queixa Principal:</strong> {data.evaluation?.mainComplaint}
+          </p>
+          <p>
+            <strong>HMP:</strong> {data.evaluation?.hmp}
+          </p>
+          <p>
+            <strong>HMA:</strong> {data.evaluation?.hma}
+          </p>
+          <p>
+            <strong>Peso:</strong> {data.evaluation?.weight} kg
+          </p>
+          <p>
+            <strong>Altura:</strong> {data.evaluation?.height} m
+          </p>
+          <p>
+            <strong>Dor (0 a 10):</strong> {data.evaluation?.painLevel}
+          </p>
+          <p>
+            <strong>Frequência Cardíaca:</strong> {data.evaluation?.heartRate}
+          </p>
+          <p>
+            <strong>Frequência Respiratória:</strong>{" "}
+            {data.evaluation?.respiratoryRate}
+          </p>
         </section>
 
         <section style={sectionStyle}>
-          <div style={titleStyle}><FaHeartbeat /> Histórico Médico</div>
-          <p><strong>Condições Associadas:</strong> {data.medicalHistory?.associatedConditions}</p>
-          {Object.entries(data.medicalHistory || {}).filter(([k]) => k !== "associatedConditions").map(([k, v]) => (
-            <p key={k}><strong>{formatKey(k)}:</strong> {v ? "Sim" : "Não"}</p>
-          ))}
+          <div style={titleStyle}>
+            <FaHeartbeat /> Histórico Médico
+          </div>
+          <p>
+            <strong>Condições Associadas:</strong>{" "}
+            {data.medicalHistory?.associatedConditions}
+          </p>
+          {Object.entries(data.medicalHistory || {})
+            .filter(([k]) => k !== "associatedConditions")
+            .map(([k, v]) => (
+              <p key={k}>
+                <strong>{formatKey(k)}:</strong> {v ? "Sim" : "Não"}
+              </p>
+            ))}
         </section>
 
         <section style={sectionStyle}>
-          <div style={titleStyle}><FaRunning /> Estilo de Vida</div>
-          <p><strong>Atividade Física:</strong> {data.lifestyle?.physicalActivity}</p>
-          <p><strong>Cirurgias:</strong> {data.lifestyle?.pastSurgeries}</p>
-          <p><strong>Fraturas:</strong> {data.lifestyle?.fractures}</p>
-          <p><strong>Fuma:</strong> {data.lifestyle?.smoking ? "Sim" : "Não"}</p>
-          <p><strong>Consome álcool:</strong> {data.lifestyle?.alcohol ? "Sim" : "Não"}</p>
-          <p><strong>Medicamentos:</strong> {data.lifestyle?.medications}</p>
+          <div style={titleStyle}>
+            <FaRunning /> Estilo de Vida
+          </div>
+          <p>
+            <strong>Atividade Física:</strong>{" "}
+            {data.lifestyle?.physicalActivity}
+          </p>
+          <p>
+            <strong>Cirurgias:</strong> {data.lifestyle?.pastSurgeries}
+          </p>
+          <p>
+            <strong>Fraturas:</strong> {data.lifestyle?.fractures}
+          </p>
+          <p>
+            <strong>Fuma:</strong> {data.lifestyle?.smoking ? "Sim" : "Não"}
+          </p>
+          <p>
+            <strong>Consome álcool:</strong>{" "}
+            {data.lifestyle?.alcohol ? "Sim" : "Não"}
+          </p>
+          <p>
+            <strong>Medicamentos:</strong> {data.lifestyle?.medications}
+          </p>
         </section>
       </div>
     </motion.div>
@@ -144,6 +262,7 @@ function btn(color) {
   const colors = {
     gray: "#d3d3d3",
     green: "#00C9A7",
+    blue: "#1e90ff",
   };
   return {
     display: "flex",
