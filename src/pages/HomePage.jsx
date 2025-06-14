@@ -84,8 +84,18 @@ export default function HomePage() {
               </div>
               <div style={styles.cardActions}>
                 <button style={styles.action}>Ver</button>
-                <button style={styles.action}>Editar</button>
-                <button style={styles.delete} onClick={() => deletePatient(p.id)}>Excluir</button>
+                <button
+                  style={styles.action}
+                  onClick={() => navigate(`/edit-patient/${p.id}`)}
+                >
+                  Editar
+                </button>
+                <button
+                  style={styles.delete}
+                  onClick={() => deletePatient(p.id)}
+                >
+                  Excluir
+                </button>
               </div>
             </div>
           ))}
