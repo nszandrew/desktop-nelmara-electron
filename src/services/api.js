@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '/api', // 👈 permite usar o proxy definido no Vite
+  baseURL: '/api',
 });
 
 api.interceptors.request.use(config => {

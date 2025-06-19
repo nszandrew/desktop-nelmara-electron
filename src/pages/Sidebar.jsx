@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { FaUser, FaFileMedical, FaSignOutAlt } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import logo from '../assets/logo-nelmara.png'; // ajuste o caminho se necessário
 
 export default function Sidebar() {
   const navigate = useNavigate();
@@ -16,37 +17,36 @@ export default function Sidebar() {
     <div
       style={{
         ...styles.sidebar,
-        width: expanded ? '200px' : '70px'
+        width: expanded ? '200px' : '70px',
       }}
       onMouseEnter={() => setExpanded(true)}
       onMouseLeave={() => setExpanded(false)}
     >
       <div style={styles.topMenu}>
         <div style={styles.logoArea}>
-          <span style={{ ...styles.logoText, opacity: expanded ? 1 : 0 }}>Nelmara</span>
+          <img
+            src={logo}
+            alt="Nelmara Logo"
+            style={{
+              ...styles.logoImage,
+              width: expanded ? '140px' : '40px',
+              opacity: expanded ? 1 : 0.9,
+            }}
+          />
         </div>
 
-        <div
-          style={styles.menuItem}
-          onClick={() => navigate('/home')}
-        >
+        <div style={styles.menuItem} onClick={() => navigate('/')}>
           <FaUser style={styles.icon} />
           {expanded && <span style={styles.label}>Pacientes</span>}
         </div>
 
-        <div
-          style={styles.menuItem}
-          onClick={() => navigate('/templates')}
-        >
+        <div style={styles.menuItem} onClick={() => navigate('/treatments')}>
           <FaFileMedical style={styles.icon} />
           {expanded && <span style={styles.label}>Tratamentos</span>}
         </div>
       </div>
 
-      <div
-        style={{ ...styles.menuItem, ...styles.logout }}
-        onClick={logout}
-      >
+      <div style={{ ...styles.menuItem, ...styles.logout }} onClick={logout}>
         <FaSignOutAlt style={styles.icon} />
         {expanded && <span style={styles.label}>Sair</span>}
       </div>
@@ -81,12 +81,10 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  logoText: {
-    color: '#fff',
-    fontSize: '1.3rem',
-    fontWeight: 'bold',
-    transition: 'opacity 0.3s ease',
-    fontFamily: 'Segoe UI, sans-serif',
+  logoImage: {
+    maxWidth: '100%',
+    height: 'auto',
+    transition: 'width 0.3s ease, opacity 0.3s ease',
   },
   menuItem: {
     display: 'flex',
@@ -110,5 +108,5 @@ const styles = {
   },
   label: {
     transition: 'opacity 0.3s ease',
-  }
+  },
 };

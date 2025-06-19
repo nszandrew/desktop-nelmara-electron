@@ -6,6 +6,9 @@ import HomePage from './pages/HomePage.jsx';
 import PatientRegisterPage from './pages/PatientRegisterPage';
 import EditPatientPage from './pages/EditPatientPage.jsx';
 import PatientViewPage from './pages/PatientViewPage.jsx';
+import TreatmentTemplatePage from './pages/TreatmentTemplateList.jsx';
+import TreatmentCreateTemplatePage from './pages/CreateTreatmentTemplate.jsx';
+import TreatmentEditTemplatePage from './pages/EditTreatmentTemplate.jsx';
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = React.useContext(AuthContext);
@@ -21,6 +24,9 @@ export default function App() {
           <Route path="/register-patient" element={<PatientRegisterPage />} /> {/* ✅ nova rota */}
           <Route path="/edit-patient/:id" element={<EditPatientPage />} />
           <Route path="/view-patient/:id" element={<PatientViewPage />} />
+          <Route path="/treatments" element={<TreatmentTemplatePage />} />
+          <Route path="/treatments/new" element={<TreatmentCreateTemplatePage />} />
+          <Route path="/treatments/edit/:id" element={<TreatmentEditTemplatePage />} />
           <Route
             path="/"
             element={
