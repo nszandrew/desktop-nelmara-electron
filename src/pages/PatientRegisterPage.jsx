@@ -4,11 +4,14 @@ import EvaluationStep from "./registerSteps/EvaluationStep";
 import MedicalHistoryStep from "./registerSteps/MedicalHistoryStep";
 import LifestyleStep from "./registerSteps/LifestyleStep";
 import ProgressBar from "./registerSteps/ProgressBar";
+import TemplateStep from "./registerSteps/TemplateStep";
 import api from "../services/api";
 import { useNavigate } from "react-router-dom";
 
 export default function PatientRegisterPage() {
   const navigate = useNavigate();
+  const [templateData, setTemplateData] = useState({});
+  const [patientId, setPatientId] = useState(null);
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState({
     patient: {},
@@ -22,6 +25,7 @@ export default function PatientRegisterPage() {
     { component: EvaluationStep, key: "evaluation" },
     { component: MedicalHistoryStep, key: "medicalHistory" },
     { component: LifestyleStep, key: "lifestyle" },
+    { component: TemplateStep, key: "template" },
   ];
 
   const CurrentStep = steps[step].component;
@@ -85,9 +89,11 @@ export default function PatientRegisterPage() {
         },
       };
 
-      await api.post("/patient", payload, {
+      const res = await api.post("/patient", payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      setPatientId(res.data.id);
+      setStep(step + 1);
 
       alert("Paciente registrado com sucesso!");
       navigate("/");
@@ -95,6 +101,23 @@ export default function PatientRegisterPage() {
       console.error("Erro ao registrar paciente:", err);
       alert("Erro ao registrar paciente.");
     }
+  };
+
+  const handleTemplateSubmit = async (templateId, answers) => {
+    const token = localStorage.getItem("token");
+    await api.post(
+      "/treatment-instance",
+      {
+        patientId,
+        templateId,
+        treatmentDate: new Date().toISOString(),
+        progress: "",
+        data: answers,
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    alert("Paciente e Template vinculados com sucesso!");
+    navigate("/");
   };
 
   function formatCPF(cpf) {
@@ -125,7 +148,7 @@ export default function PatientRegisterPage() {
           data.painLevel
         );
       case "medicalHistory":
-        return typeof data.allergy === "boolean"; // pelo menos validando presença de bool
+        return true; // pelo menos validando presença de bool
       case "lifestyle":
         return (
           data.physicalActivity !== undefined && data.medications !== undefined
@@ -153,10 +176,18 @@ export default function PatientRegisterPage() {
       </button>
       <ProgressBar currentStep={step} totalSteps={steps.length} />
       <div style={styles.stepWrapper}>
-        <CurrentStep
-          data={formData[steps[step].key]}
-          onChange={(data) => handleChange(steps[step].key, data)}
-        />
+        {step === steps.length - 1 ? (
+          patientId ? (
+            <TemplateStep onSubmit={handleTemplateSubmit} />
+          ) : (
+            <div>Salvando paciente...</div>
+          )
+        ) : (
+          <CurrentStep
+            data={formData[steps[step].key]}
+            onChange={(data) => handleChange(steps[step].key, data)}
+          />
+        )}
       </div>
       <div style={styles.buttons}>
         {step > 0 && (
@@ -166,7 +197,7 @@ export default function PatientRegisterPage() {
         )}
         {step < steps.length - 1 ? (
           <button
-            onClick={() => {
+            onClick={async () => {
               const currentKey = steps[step].key;
               const currentData = formData[currentKey];
               if (!validateStep(currentData, currentKey)) {
@@ -175,6 +206,85 @@ export default function PatientRegisterPage() {
                 );
                 return;
               }
+
+              // Se estamos indo do último step de formulário para o template...
+              if (step === steps.length - 2 && !patientId) {
+                try {
+                  const token = localStorage.getItem("token");
+
+                  const payload = {
+                    patient: {
+                      fullName: formData.patient.fullName || "",
+                      cpf: formatCPF(formData.patient.cpf || ""),
+                      email: formData.patient.email || "",
+                      phone: formData.patient.phone || "",
+                      dateOfBirth: new Date(
+                        formData.patient.dateOfBirth
+                      ).toISOString(),
+                      address: formData.patient.address || "",
+                      profession: formData.patient.profession || "",
+                      indication: formData.patient.indication || "",
+                      gender: formData.patient.gender || "MALE",
+                    },
+                    evaluation: {
+                      date: formData.evaluation.date || "",
+                      mainComplaint: formData.evaluation.mainComplaint || "",
+                      hmp: formData.evaluation.hmp || "",
+                      hma: formData.evaluation.hma || "",
+                      weight: parseFloat(formData.evaluation.weight || 0),
+                      height: parseFloat(formData.evaluation.height || 0),
+                      painLevel: parseInt(formData.evaluation.painLevel || 0),
+                      heartRate: formData.evaluation.heartRate || "",
+                      respiratoryRate:
+                        formData.evaluation.respiratoryRate || "",
+                    },
+                    medicalHistory: {
+                      associatedConditions:
+                        formData.medicalHistory.associatedConditions || "",
+                      allergy: !!formData.medicalHistory.allergy,
+                      enzymeDeficiencyG6PD:
+                        !!formData.medicalHistory.enzymeDeficiencyG6PD,
+                      sinusitis: !!formData.medicalHistory.sinusitis,
+                      rhinitis: !!formData.medicalHistory.rhinitis,
+                      diabetesMellitus:
+                        !!formData.medicalHistory.diabetesMellitus,
+                      highBloodPressure:
+                        !!formData.medicalHistory.highBloodPressure,
+                      cardiopathy: !!formData.medicalHistory.cardiopathy,
+                      anemia: !!formData.medicalHistory.anemia,
+                      hyperthyroidism:
+                        !!formData.medicalHistory.hyperthyroidism,
+                      recentCovidVaccine:
+                        !!formData.medicalHistory.recentCovidVaccine,
+                      recentHemorrhage:
+                        !!formData.medicalHistory.recentHemorrhage,
+                    },
+                    lifestyle: {
+                      physicalActivity:
+                        formData.lifestyle.physicalActivity || "",
+                      pastSurgeries: formData.lifestyle.pastSurgeries || "",
+                      fractures: formData.lifestyle.fractures || "",
+                      smoking: !!formData.lifestyle.smoking,
+                      alcohol: !!formData.lifestyle.alcohol,
+                      medications: formData.lifestyle.medications || "",
+                    },
+                  };
+
+                  const res = await api.post("/patient", payload, {
+                    headers: { Authorization: `Bearer ${token}` },
+                  });
+
+                  setPatientId(res.data.id);
+                  setStep(step + 1);
+                  return;
+                } catch (err) {
+                  console.error("Erro ao salvar paciente:", err);
+                  alert("Erro ao registrar paciente.");
+                  return;
+                }
+              }
+
+              // Se for qualquer outro passo
               setStep(step + 1);
             }}
             style={styles.next}

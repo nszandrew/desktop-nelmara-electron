@@ -28,15 +28,15 @@ export default function TreatmentTemplateList() {
 
       const isArray = Array.isArray(res.data);
       if (isArray) {
-        setTemplates(res.data); // caso o backend retorne apenas um array
+        setTemplates(res.data); 
         setTotalPages(1);
       } else {
-        setTemplates(res.data.content || []); // fallback seguro
+        setTemplates(res.data.content || []); 
         setTotalPages(res.data.totalPages || 1);
       }
     } catch (err) {
       console.error("Erro ao buscar templates:", err);
-      setTemplates([]); // evita a tela branca mesmo se der erro
+      setTemplates([]); 
     }
   };
 
@@ -46,7 +46,7 @@ export default function TreatmentTemplateList() {
       await api.delete(`/template/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      fetchTemplates(); // Atualiza lista
+      fetchTemplates(); 
     }
   };
 
