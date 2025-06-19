@@ -6,12 +6,15 @@ import EvaluationStep from "./registerSteps/EvaluationStep";
 import MedicalHistoryStep from "./registerSteps/MedicalHistoryStep";
 import LifestyleStep from "./registerSteps/LifestyleStep";
 import ProgressBar from "./registerSteps/ProgressBar";
+import TemplateStep from "./registerSteps/TemplateStep";
 import api from "../services/api";
 
 export default function EditPatientPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
+  const [treatmentInstanceId, setTreatmentInstanceId] = useState(null);
+  const [initialTemplateData, setInitialTemplateData] = useState({});
   const [formData, setFormData] = useState({
     patient: {},
     evaluation: {},
@@ -51,6 +54,14 @@ export default function EditPatientPage() {
         };
 
         setFormData(formattedData);
+        const instance = res.data.treatmentInstance?.[0];
+        if (instance) {
+          setTreatmentInstanceId(instance.id);
+          setInitialTemplateData({
+            templateId: instance.id,
+            answers: instance.data,
+          });
+        }
       } catch (err) {
         alert("Erro ao buscar dados do paciente.");
       }
@@ -63,6 +74,7 @@ export default function EditPatientPage() {
     { component: EvaluationStep, key: "evaluation" },
     { component: MedicalHistoryStep, key: "medicalHistory" },
     { component: LifestyleStep, key: "lifestyle" },
+    { component: TemplateStep, key: "template" },
   ];
 
   const CurrentStep = steps[step].component;
@@ -111,6 +123,25 @@ export default function EditPatientPage() {
       console.error("Erro ao atualizar paciente:", err);
       alert("Erro ao atualizar paciente.");
     }
+  };
+
+  const handleTemplateUpdate = async (
+    templateId,
+    answers,
+    treatmentInstanceId
+  ) => {
+    const token = localStorage.getItem("token");
+    await api.put(
+      `/treatment-instance/${treatmentInstanceId}`,
+      {
+        treatmentDate: new Date().toISOString(),
+        progress: "",
+        data: answers,
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    alert("Template atualizado com sucesso!");
+    navigate("/");
   };
 
   const validateStep = (data, key) => {
@@ -174,10 +205,18 @@ export default function EditPatientPage() {
       </button>
       <ProgressBar currentStep={step} totalSteps={steps.length} />
       <div style={{ minHeight: "400px", transition: "all 0.3s ease" }}>
-        <CurrentStep
-          data={formData[steps[step].key]}
-          onChange={(data) => handleChange(steps[step].key, data)}
-        />
+        {steps[step].key === "template" ? (
+          <TemplateStep
+            treatmentInstanceId={treatmentInstanceId}
+            initialValues={initialTemplateData}
+            onSubmit={handleTemplateUpdate}
+          />
+        ) : (
+          <CurrentStep
+            data={formData[steps[step].key]}
+            onChange={(data) => handleChange(steps[step].key, data)}
+          />
+        )}
       </div>
       <div
         style={{
