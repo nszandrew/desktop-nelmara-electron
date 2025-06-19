@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import api from "../../services/api";
 
-export default function TemplateStep({ onSubmit }) {
+export default function TemplateStep({ onSubmit, treatmentInstanceId, initialValues = {} }) {
   const [templates, setTemplates] = useState([]);
-  const [selected, setSelected] = useState(null);
+  const [selected, setSelected] = useState(initialValues.templateId || null);
   const [fields, setFields] = useState([]);
-  const [answers, setAnswers] = useState({});
+  const [answers, setAnswers] = useState(initialValues.answers || {});
 
   useEffect(() => {
     const fetch = async () => {
@@ -44,7 +44,7 @@ export default function TemplateStep({ onSubmit }) {
     if (!selected || fields.some((f) => f.required && !answers[f.fieldName])) {
       return alert("Selecione o template e preencha os campos obrigatórios");
     }
-    onSubmit(selected, answers);
+    onSubmit(selected, answers, treatmentInstanceId);
   };
 
   return (

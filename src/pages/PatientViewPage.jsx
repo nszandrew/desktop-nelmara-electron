@@ -15,6 +15,24 @@ export default function ViewPatientPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [data, setData] = useState(null);
+  const [isPrinting, setIsPrinting] = useState(false);
+
+  useEffect(() => {
+    if (isPrinting) {
+      const timeout = setTimeout(() => {
+        window.print();
+        setIsPrinting(false);
+      }, 300);
+      return () => clearTimeout(timeout);
+    }
+  }, [isPrinting]);
+
+  const estiloBase = {
+    minHeight: "100vh",
+    padding: "3rem 1rem",
+    backgroundColor: "#025C4A",
+    fontFamily: "Segoe UI, sans-serif",
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -64,6 +82,19 @@ export default function ViewPatientPage() {
   if (!data)
     return <p style={{ textAlign: "center", color: "#fff" }}>Carregando...</p>;
 
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      style={estiloBase}
+    >
+      {renderContent(data, navigate, () => setIsPrinting(true))}
+    </motion.div>
+  );
+}
+
+function renderContent(data, navigate, triggerPrint = () => window.print()) {
   const sectionStyle = {
     marginBottom: "2rem",
     padding: "1.5rem",
@@ -83,157 +114,176 @@ export default function ViewPatientPage() {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
+    <div
       style={{
-        minHeight: "100vh",
-        padding: "3rem 1rem",
-        backgroundColor: "#025C4A",
-        fontFamily: "Segoe UI, sans-serif",
+        maxWidth: "900px",
+        margin: "0 auto",
+        background: "#fff",
+        borderRadius: "20px",
+        padding: "2.5rem",
+        boxShadow: "0 8px 30px rgba(0,0,0,0.2)",
       }}
     >
       <div
+        className="no-print"
         style={{
-          maxWidth: "900px",
-          margin: "0 auto",
-          background: "#fff",
-          borderRadius: "20px",
-          padding: "2.5rem",
-          boxShadow: "0 8px 30px rgba(0,0,0,0.2)",
+          display: "flex",
+          justifyContent: "space-between",
+          marginBottom: "2rem",
         }}
       >
-        <div
-          className="no-print"
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginBottom: "2rem",
+        <button onClick={() => navigate("/")} style={btn("gray")}>
+          <FaArrowLeft /> Voltar
+        </button>
+        <button
+          onClick={() => {
+            console.log("PRINT button clicked!");
+            triggerPrint();
           }}
+          style={btn("blue")}
         >
-          <button onClick={() => navigate("/")} style={btn("gray")}>
-            <FaArrowLeft /> Voltar
-          </button>
-          <button onClick={() => window.print()} style={btn("blue")}>
-            🖨️ Imprimir
-          </button>
-          <button onClick={() => navigate(`/edit/${id}`)} style={btn("green")}>
-            <FaEdit /> Editar
-          </button>
-        </div>
-
-        <section style={sectionStyle}>
-          <div style={titleStyle}>
-            <FaUser /> Dados Pessoais
-          </div>
-          <p>
-            <strong>Nome:</strong> {data.fullName}
-          </p>
-          <p>
-            <strong>CPF:</strong> {data.cpf}
-          </p>
-          <p>
-            <strong>Email:</strong> {data.email}
-          </p>
-          <p>
-            <strong>Telefone:</strong> {data.phone}
-          </p>
-          <p>
-            <strong>Gênero:</strong> {data.gender}
-          </p>
-          <p>
-            <strong>Data de Nascimento:</strong> {formatDate(data.dateOfBirth)}
-          </p>
-          <p>
-            <strong>Profissão:</strong> {data.profession}
-          </p>
-          <p>
-            <strong>Indicação:</strong> {data.indication}
-          </p>
-          <p>
-            <strong>Endereço:</strong> {data.address}
-          </p>
-        </section>
-
-        <section style={sectionStyle}>
-          <div style={titleStyle}>
-            <FaStethoscope /> Avaliação Clínica
-          </div>
-          <p>
-            <strong>Data:</strong> {formatDate(data.evaluation?.date)}
-          </p>
-          <p>
-            <strong>Queixa Principal:</strong> {data.evaluation?.mainComplaint}
-          </p>
-          <p>
-            <strong>HMP:</strong> {data.evaluation?.hmp}
-          </p>
-          <p>
-            <strong>HMA:</strong> {data.evaluation?.hma}
-          </p>
-          <p>
-            <strong>Peso:</strong> {data.evaluation?.weight} kg
-          </p>
-          <p>
-            <strong>Altura:</strong> {data.evaluation?.height} m
-          </p>
-          <p>
-            <strong>Dor (0 a 10):</strong> {data.evaluation?.painLevel}
-          </p>
-          <p>
-            <strong>Frequência Cardíaca:</strong> {data.evaluation?.heartRate}
-          </p>
-          <p>
-            <strong>Frequência Respiratória:</strong>{" "}
-            {data.evaluation?.respiratoryRate}
-          </p>
-        </section>
-
-        <section style={sectionStyle}>
-          <div style={titleStyle}>
-            <FaHeartbeat /> Histórico Médico
-          </div>
-          <p>
-            <strong>Condições Associadas:</strong>{" "}
-            {data.medicalHistory?.associatedConditions}
-          </p>
-          {Object.entries(data.medicalHistory || {})
-            .filter(([k]) => k !== "associatedConditions")
-            .map(([k, v]) => (
-              <p key={k}>
-                <strong>{formatKey(k)}:</strong> {v ? "Sim" : "Não"}
-              </p>
-            ))}
-        </section>
-
-        <section style={sectionStyle}>
-          <div style={titleStyle}>
-            <FaRunning /> Estilo de Vida
-          </div>
-          <p>
-            <strong>Atividade Física:</strong>{" "}
-            {data.lifestyle?.physicalActivity}
-          </p>
-          <p>
-            <strong>Cirurgias:</strong> {data.lifestyle?.pastSurgeries}
-          </p>
-          <p>
-            <strong>Fraturas:</strong> {data.lifestyle?.fractures}
-          </p>
-          <p>
-            <strong>Fuma:</strong> {data.lifestyle?.smoking ? "Sim" : "Não"}
-          </p>
-          <p>
-            <strong>Consome álcool:</strong>{" "}
-            {data.lifestyle?.alcohol ? "Sim" : "Não"}
-          </p>
-          <p>
-            <strong>Medicamentos:</strong> {data.lifestyle?.medications}
-          </p>
-        </section>
+          🖨️ Imprimir
+        </button>
+        <button
+          onClick={() => navigate(`/edit-patient/${data.id}`)}
+          style={btn("green")}
+        >
+          <FaEdit /> Editar
+        </button>
       </div>
-    </motion.div>
+
+      <section style={sectionStyle}>
+        <div style={titleStyle}>
+          <FaUser /> Dados Pessoais
+        </div>
+        <p>
+          <strong>Nome:</strong> {data.fullName}
+        </p>
+        <p>
+          <strong>CPF:</strong> {data.cpf}
+        </p>
+        <p>
+          <strong>Email:</strong> {data.email}
+        </p>
+        <p>
+          <strong>Telefone:</strong> {data.phone}
+        </p>
+        <p>
+          <strong>Gênero:</strong> {data.gender}
+        </p>
+        <p>
+          <strong>Data de Nascimento:</strong> {formatDate(data.dateOfBirth)}
+        </p>
+        <p>
+          <strong>Profissão:</strong> {data.profession}
+        </p>
+        <p>
+          <strong>Indicação:</strong> {data.indication}
+        </p>
+        <p>
+          <strong>Endereço:</strong> {data.address}
+        </p>
+      </section>
+
+      <section style={sectionStyle}>
+        <div style={titleStyle}>
+          <FaStethoscope /> Avaliação Clínica
+        </div>
+        <p>
+          <strong>Data:</strong> {formatDate(data.evaluation?.date)}
+        </p>
+        <p>
+          <strong>Queixa Principal:</strong> {data.evaluation?.mainComplaint}
+        </p>
+        <p>
+          <strong>HMP:</strong> {data.evaluation?.hmp}
+        </p>
+        <p>
+          <strong>HMA:</strong> {data.evaluation?.hma}
+        </p>
+        <p>
+          <strong>Peso:</strong> {data.evaluation?.weight} kg
+        </p>
+        <p>
+          <strong>Altura:</strong> {data.evaluation?.height} m
+        </p>
+        <p>
+          <strong>Dor (0 a 10):</strong> {data.evaluation?.painLevel}
+        </p>
+        <p>
+          <strong>Frequência Cardíaca:</strong> {data.evaluation?.heartRate}
+        </p>
+        <p>
+          <strong>Frequência Respiratória:</strong>{" "}
+          {data.evaluation?.respiratoryRate}
+        </p>
+      </section>
+
+      <section style={sectionStyle}>
+        <div style={titleStyle}>
+          <FaHeartbeat /> Histórico Médico
+        </div>
+        <p>
+          <strong>Condições Associadas:</strong>{" "}
+          {data.medicalHistory?.associatedConditions}
+        </p>
+        {Object.entries(data.medicalHistory || {})
+          .filter(([k]) => k !== "associatedConditions")
+          .map(([k, v]) => (
+            <p key={k}>
+              <strong>{formatKey(k)}:</strong> {v ? "Sim" : "Não"}
+            </p>
+          ))}
+      </section>
+
+      <section style={sectionStyle}>
+        <div style={titleStyle}>
+          <FaRunning /> Estilo de Vida
+        </div>
+        <p>
+          <strong>Atividade Física:</strong> {data.lifestyle?.physicalActivity}
+        </p>
+        <p>
+          <strong>Cirurgias:</strong> {data.lifestyle?.pastSurgeries}
+        </p>
+        <p>
+          <strong>Fraturas:</strong> {data.lifestyle?.fractures}
+        </p>
+        <p>
+          <strong>Fuma:</strong> {data.lifestyle?.smoking ? "Sim" : "Não"}
+        </p>
+        <p>
+          <strong>Consome álcool:</strong>{" "}
+          {data.lifestyle?.alcohol ? "Sim" : "Não"}
+        </p>
+        <p>
+          <strong>Medicamentos:</strong> {data.lifestyle?.medications}
+        </p>
+      </section>
+
+      {data.treatmentInstance?.[0] && (
+        <section style={sectionStyle}>
+          <div style={titleStyle}>📝 Tratamento</div>
+          <p>
+            <strong>Nome do Tratamento:</strong>{" "}
+            {data.treatmentInstance[0].name}
+          </p>
+          <p>
+            <strong>Data do Tratamento:</strong>{" "}
+            {formatDate(data.treatmentInstance[0].treatmentDate)}
+          </p>
+          <div style={{ marginTop: "1rem" }}>
+            {Object.entries(data.treatmentInstance[0].data || {}).map(
+              ([key, value]) => (
+                <p key={key}>
+                  <strong>{key}:</strong> {value}
+                </p>
+              )
+            )}
+          </div>
+        </section>
+      )}
+    </div>
   );
 }
 
