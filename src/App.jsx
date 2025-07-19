@@ -9,6 +9,7 @@ import PatientViewPage from './pages/PatientViewPage.jsx';
 import TreatmentTemplatePage from './pages/TreatmentTemplateList.jsx';
 import TreatmentCreateTemplatePage from './pages/CreateTreatmentTemplate.jsx';
 import TreatmentEditTemplatePage from './pages/EditTreatmentTemplate.jsx';
+import RmaPage from './pages/RmaPage.jsx';
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = React.useContext(AuthContext);
@@ -26,6 +27,8 @@ export default function App() {
           <Route path="/view-patient/:id" element={<PatientViewPage />} />
           <Route path="/treatments" element={<TreatmentTemplatePage />} />
           <Route path="/treatments/new" element={<TreatmentCreateTemplatePage />} />
+          <Route path="/rma" element={<RmaPage />} />
+          <Route path="/rma/:page" element={<RmaPage />} />
           <Route path="/treatments/edit/:id" element={<TreatmentEditTemplatePage />} />
           <Route
             path="/"

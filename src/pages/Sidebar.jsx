@@ -1,8 +1,7 @@
-// Sidebar.jsx
 import React, { useState } from 'react';
-import { FaUser, FaFileMedical, FaSignOutAlt } from 'react-icons/fa';
+import { FaUser, FaFileMedical, FaSignOutAlt, FaFilePdf } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import logo from '../assets/logo-nelmara.png'; // ajuste o caminho se necessário
+import logo from '../assets/logo-nelmara.png';
 
 export default function Sidebar() {
   const navigate = useNavigate();
@@ -43,6 +42,11 @@ export default function Sidebar() {
         <div style={styles.menuItem} onClick={() => navigate('/treatments')}>
           <FaFileMedical style={styles.icon} />
           {expanded && <span style={styles.label}>Tratamentos</span>}
+        </div>
+
+        <div style={styles.menuItem} onClick={() => navigate('/rma')}>
+          <FaFilePdf style={styles.icon} />
+          {expanded && <span style={styles.label}>RMA</span>}
         </div>
       </div>
 
