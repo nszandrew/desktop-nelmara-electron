@@ -8,7 +8,7 @@ export default function RmaPage() {
   const { page } = useParams();
   const navigate = useNavigate();
   const [isPrinting, setIsPrinting] = useState(false);
-  const [pdfKey, setPdfKey] = useState(0);
+  const [pdfKey, setPdfKey] = useState(Date.now());
   const [pdfError, setPdfError] = useState(false);
   const iframeRef = useRef(null);
 
@@ -21,7 +21,7 @@ export default function RmaPage() {
     { id: 6, page: 30, title: "BALANCEAMENTO DE JOELHOS" },
     { id: 7, page: 31, title: "JOELHO" },
     { id: 8, page: 32, title: "BALANCEAMENTO LÁTERO-LATERAL DE MEMBROS INFERIORES" },
-    { id: 9, page: 33, title: "LOMBAR (PÁGINAS 33–35)" },
+    { id: 9, page: 33, title: "LOMBAR" },
     { id: 10, page: 36, title: "DISTENSÃO MUSCULAR / CÃIBRAS OU CONTRATURAS" },
     { id: 11, page: 37, title: "BALANCEAMENTO DA MUSCULATURA POSTURAL DE MEMBROS INFERIORES" },
     { id: 12, page: 38, title: "CÓLICA MENSTRUAL" },
@@ -37,74 +37,43 @@ export default function RmaPage() {
     { id: 22, page: 49, title: "MODELOS ANATÔMICOS" },
   ];
 
-  // Função para obter o caminho correto do PDF no Electron
-  const getPdfPath = () => {
-    const isDevelopment = process.env.NODE_ENV === 'development';
-    if (isDevelopment) {
-      return './src/assets/rma-1.pdf';
-    }
-    
-    // Em produção no Electron, os assets ficam na pasta resources
-    if (window.require) {
-      const path = window.require('path');
-      const { app } = window.require('@electron/remote') || window.require('electron').remote;
-      return path.join(app.getAppPath(), 'assets', 'rma-1.pdf');
-    }
-    
-    // Fallback para diferentes estruturas de pasta
-    const possiblePaths = [
-      './assets/rma-1.pdf',
-      './resources/assets/rma-1.pdf',
-      './dist/assets/rma-1.pdf',
-      './build/assets/rma-1.pdf'
-    ];
-    
-    return possiblePaths[0]; // Retorna o primeiro como padrão
-  };
+  const pdfBasePath = "src/assets/rma-1.pdf";
 
-  const pdfBasePath = getPdfPath();
-
-  // Função para verificar se o PDF existe
+  // Verificar se o PDF existe
   const checkPdfExists = async () => {
     try {
-      const response = await fetch(pdfBasePath);
+      const response = await fetch(pdfBasePath, { method: "HEAD" });
       if (response.ok) {
         setPdfError(false);
+        console.log(`PDF encontrado: ${pdfBasePath}`);
         return true;
       } else {
         setPdfError(true);
+        console.error(`PDF não encontrado: ${response.status} ${response.statusText}`);
         return false;
       }
     } catch (error) {
-      console.error('Erro ao verificar PDF:', error);
       setPdfError(true);
+      console.error("Erro ao verificar PDF:", error);
       return false;
     }
   };
 
-  // Força reload do iframe quando a página muda
+  // Carregar PDF
   useEffect(() => {
     const loadPdf = async () => {
-      setPdfKey(prev => prev + 1);
-      
-      // Verifica se o PDF existe antes de tentar carregar
+      setPdfKey(Date.now());
       const exists = await checkPdfExists();
-      
       if (exists && iframeRef.current) {
-        // Adiciona timestamp para forçar reload
-        const timestamp = new Date().getTime();
-        const pdfUrl = `${pdfBasePath}?t=${timestamp}#page=${currentPage}`;
-        
-        setTimeout(() => {
-          if (iframeRef.current) {
-            iframeRef.current.src = pdfUrl;
-          }
-        }, 200);
+        const pdfUrl = `${pdfBasePath}#page=${currentPage}`;
+        console.log(`Tentando carregar PDF: ${pdfUrl}`);
+        iframeRef.current.src = pdfUrl;
+      } else {
+        console.error(`Não foi possível carregar o PDF: ${pdfBasePath}`);
       }
     };
-
     loadPdf();
-  }, [page, pdfBasePath]);
+  }, [page]);
 
   useEffect(() => {
     if (isPrinting) {
@@ -197,26 +166,37 @@ export default function RmaPage() {
       gap: "1rem",
       marginBottom: "2rem",
     },
-    pageButton: (isActive) => ({
+    pageButton: (isActive, isDisabled) => ({
       display: "flex",
       alignItems: "center",
       gap: "0.5rem",
       padding: "0.8rem 1.2rem",
-      backgroundColor: isActive ? "#00C9A7" : "#f0f0f0",
-      color: isActive ? "#fff" : "#333",
+      backgroundColor: isActive ? "#00C9A7" : isDisabled ? "#d3d3d3" : "#f0f0f0",
+      color: isActive ? "#fff" : isDisabled ? "#666" : "#333",
       border: "1px solid #e0e0e0",
       borderRadius: "8px",
-      cursor: "pointer",
+      cursor: isDisabled ? "not-allowed" : "pointer",
       fontWeight: "500",
       fontSize: "0.95rem",
       transition: "all 0.3s ease",
       textAlign: "left",
       boxShadow: isActive ? "0 2px 8px rgba(0,0,0,0.1)" : "none",
+      opacity: isDisabled ? 0.6 : 1,
       "&:hover": {
-        backgroundColor: isActive ? "#029B7B" : "#e0e0e0",
-        transform: "translateY(-2px)",
+        backgroundColor: isActive ? "#029B7B" : isDisabled ? "#d3d3d3" : "#e0e0e0",
+        transform: isDisabled ? "none" : "translateY(-2px)",
       },
     }),
+    betaMessage: {
+      padding: "0.5rem 1rem",
+      backgroundColor: "#fff3cd",
+      borderRadius: "8px",
+      color: "#856404",
+      textAlign: "center",
+      marginBottom: "1rem",
+      fontWeight: "500",
+      fontSize: "0.95rem",
+    },
     pdfSection: {
       backgroundColor: "#fff",
       borderRadius: "12px",
@@ -287,7 +267,16 @@ export default function RmaPage() {
       marginTop: "1rem",
       fontSize: "0.85rem",
       color: "#666",
-    }
+    },
+    placeholder: {
+      height: "800px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "#f9f9f9",
+      border: "1px solid #e0e0e0",
+      borderRadius: "8px",
+    },
   };
 
   const currentPage = parseInt(page) || rmaPages[0].page;
@@ -308,18 +297,24 @@ export default function RmaPage() {
 
   const handleOpenExternal = () => {
     if (window.require) {
-      const { shell } = window.require('electron');
-      shell.openPath(pdfBasePath);
+      const { shell, app } = window.require("electron");
+      const path = window.require("path");
+      const pdfPath = path.join(app.getAppPath(), "assets", "rma-1.pdf");
+      shell.openPath(pdfPath).catch((err) => {
+        console.error("Erro ao abrir PDF externamente:", err);
+      });
     } else {
-      window.open(pdfBasePath, '_blank');
+      window.open(pdfBasePath, "_blank");
     }
   };
 
   const handleReloadPdf = () => {
-    setPdfKey(prev => prev + 1);
+    setPdfKey(Date.now());
+    setPdfError(false);
     if (iframeRef.current) {
-      const timestamp = new Date().getTime();
-      iframeRef.current.src = `${pdfBasePath}?t=${timestamp}#page=${currentPage}`;
+      const pdfUrl = `${pdfBasePath}#page=${currentPage}`;
+      console.log(`Recarregando PDF: ${pdfUrl}`);
+      iframeRef.current.src = pdfUrl;
     }
   };
 
@@ -350,17 +345,26 @@ export default function RmaPage() {
             </div>
           </div>
 
-          {/* Lista de páginas */}
-          <div className="no-print" style={styles.pageList}>
-            {rmaPages.map((rma) => (
-              <button
-                key={rma.id}
-                onClick={() => navigate(`/rma/${rma.page}`)}
-                style={styles.pageButton(rma.page === currentPage)}
-              >
-                <FaFilePdf /> {rma.title}
-              </button>
-            ))}
+          {/* Lista de páginas com mensagem BETA */}
+          <div className="no-print">
+            <div style={styles.betaMessage}>
+              ⚠️ Funcionalidade em fase BETA: Navegação por botões desativada.
+            </div>
+            <div style={styles.pageList}>
+              {rmaPages.map((rma) => (
+                <button
+                  key={rma.id}
+                  style={styles.pageButton(rma.page === currentPage, true)}
+                  disabled={true}
+                  title="Funcionalidade em fase BETA"
+                >
+                  <FaFilePdf /> {rma.title}
+                  <span style={{ marginLeft: "0.5rem", fontSize: "0.8rem", color: "#856404" }}>
+                    (BETA)
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Visualização do PDF */}
@@ -368,8 +372,23 @@ export default function RmaPage() {
             <div style={styles.pdfTitle}>
               <FaFilePdf /> {rmaPages.find((p) => p.page === currentPage)?.title || "RMA"}
             </div>
-            
-            {!pdfError ? (
+            {pdfError ? (
+              <div style={styles.placeholder}>
+                <div style={{ textAlign: "center" }}>
+                  <FaFilePdf size={64} color="#ccc" />
+                  <p>PDF não pôde ser carregado</p>
+                  <button onClick={handleReloadPdf} style={styles.btn("green")}>
+                    🔄 Tentar novamente
+                  </button>
+                  <button
+                    onClick={handleOpenExternal}
+                    style={{ ...styles.btn("blue"), marginTop: "0.5rem" }}
+                  >
+                    📂 Abrir externamente
+                  </button>
+                </div>
+              </div>
+            ) : (
               <iframe
                 key={pdfKey}
                 ref={iframeRef}
@@ -377,39 +396,21 @@ export default function RmaPage() {
                 title="RMA PDF"
                 width="100%"
                 height="800px"
-                style={{ 
-                  borderRadius: "8px", 
+                style={{
+                  borderRadius: "8px",
                   border: "1px solid #e0e0e0",
-                  backgroundColor: "#f9f9f9"
+                  backgroundColor: "#f9f9f9",
                 }}
                 onLoad={() => {
-                  console.log(`PDF carregado: página ${currentPage}`);
+                  console.log(`PDF carregado com sucesso: página ${currentPage}`);
+                  setPdfError(false);
                 }}
                 onError={() => {
-                  console.error('Erro ao carregar PDF');
+                  console.error(`Erro ao carregar PDF na página ${currentPage}`);
                   setPdfError(true);
                 }}
               />
-            ) : (
-              <div style={{ 
-                height: "800px", 
-                display: "flex", 
-                alignItems: "center", 
-                justifyContent: "center",
-                backgroundColor: "#f9f9f9",
-                border: "1px solid #e0e0e0",
-                borderRadius: "8px"
-              }}>
-                <div style={{ textAlign: "center" }}>
-                  <FaFilePdf size={64} color="#ccc" />
-                  <p>PDF não pôde ser carregado</p>
-                  <button onClick={handleReloadPdf} style={styles.btn("green")}>
-                    🔄 Tentar novamente
-                  </button>
-                </div>
-              </div>
             )}
-
             <div className="no-print" style={styles.pdfNavigation}>
               <button
                 onClick={handlePrevPage}
@@ -427,14 +428,14 @@ export default function RmaPage() {
                 Próxima <FaChevronRight />
               </button>
             </div>
-
-            {/* Informações de debug e controles */}
             <div className="no-print">
               {pdfError ? (
                 <div style={styles.errorMessage}>
                   ❌ PDF não encontrado no caminho: <code>{pdfBasePath}</code>
                   <br />
-                  <button 
+                  Verifique se o arquivo está em <code>public/assets/rma-1.pdf</code>.
+                  <br />
+                  <button
                     onClick={handleOpenExternal}
                     style={{ ...styles.btn("blue"), marginTop: "0.5rem" }}
                   >
@@ -446,13 +447,16 @@ export default function RmaPage() {
                   ✅ PDF carregado com sucesso
                 </div>
               )}
-
               <div style={styles.debugInfo}>
-                <strong>Informações de debug:</strong><br />
-                Caminho do PDF: <code>{pdfBasePath}</code><br />
-                Página atual: {currentPage}<br />
-                Modo: {process.env.NODE_ENV || 'production'}<br />
-                Electron: {window.require ? 'Sim' : 'Não'}
+                <strong>Informações de debug:</strong>
+                <br />
+                Caminho do PDF: <code>{pdfBasePath}</code>
+                <br />
+                Página atual: {currentPage}
+                <br />
+                Modo: {process.env.NODE_ENV || "production"}
+                <br />
+                Electron: {window.require ? "Sim" : "Não"}
               </div>
             </div>
           </section>
