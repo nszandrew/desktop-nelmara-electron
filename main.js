@@ -14,8 +14,8 @@ function createWindow() {
 
   // Para desenvolvimento, carrega o frontend do Vite
   // Em produção, substitua por: win.loadFile(path.join(__dirname, 'dist', 'index.html'))
-  //win.loadURL('http://localhost:5173');
-  win.loadFile(path.join(__dirname, 'dist', 'index.html'));
+  win.loadURL('http://localhost:5173');
+  //win.loadFile(path.join(__dirname, 'dist', 'index.html'));
 
   autoUpdater.checkForUpdatesAndNotify();
 }
@@ -41,7 +41,7 @@ app.whenReady().then(() => {
   autoUpdater.setFeedURL({
     provider: 'github',
     owner: 'nszandrew', 
-    repo: 'https://github.com/nszandrew/desktop-nelmara-electron' 
+    repo: 'desktop-nelmara-electron' // Removi o https://github.com/
   });
 
   createWindow();
@@ -49,4 +49,8 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
+});
+
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });

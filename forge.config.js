@@ -4,21 +4,40 @@ const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 module.exports = {
   packagerConfig: {
     asar: true,
+    // Adicione estas configurações para garantir os caminhos corretos
+    dir: '.',
+    out: 'out',
+    // Ignora arquivos desnecessários para reduzir o tamanho e evitar problemas
+    ignore: [
+      /^\/src\//,
+      /^\/\.vscode\//,
+      /^\/\.git\//,
+      /^\/\.gitignore$/,
+      /^\/README\.md$/,
+      /^\/vite\.config\./,
+      /^\/node_modules\/.*\/test\//,
+      /^\/node_modules\/.*\/tests\//,
+      /^\/node_modules\/.*\/\.git\//,
+    ],
+    // Força a inclusão de certas dependências problemáticas
+    afterCopy: [
+      (buildPath, electronVersion, platform, arch, callback) => {
+        callback();
+      }
+    ]
   },
   rebuildConfig: {},
   makers: [
     {
-      name: '@electron-forge/maker-squirrel',
-      config: {},
+      name: '@electron-forge/maker-zip',
+      platforms: ['win32'],
+      config: {}
     },
     {
       name: '@electron-forge/maker-zip',
       platforms: ['darwin'],
-    },
-    {
-      name: '@electron-forge/maker-appimage',
-      config: {},
-    },
+      config: {}
+    }
   ],
   plugins: [
     {
