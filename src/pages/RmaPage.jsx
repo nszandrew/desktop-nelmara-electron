@@ -13,9 +13,9 @@ export default function RmaPage() {
   const iframeRef = useRef(null);
 
   const rmaPages = [
-    { id: 1, page: 25, title: "BALANCEAMENTO CERVICAL" },
-    { id: 2, page: 26, title: "BALANCEAMENTO DE TRAPÉZIOS – FIBRAS SUPERIORES" },
-    { id: 3, page: 27, title: "BALANCEAMENTO DORSAL" },
+    { id: 1, page: 25, title: "CERVICAL" },
+    { id: 2, page: 26, title: "DORSAL" },
+    { id: 3, page: 27, title: "LOMBAR" },
     { id: 4, page: 28, title: "BALANCEAMENTO DAS ARTICULAÇÕES METATARSOFALANGEANAS" },
     { id: 5, page: 29, title: "EDEMA DE JOELHO" },
     { id: 6, page: 30, title: "BALANCEAMENTO DE JOELHOS" },
