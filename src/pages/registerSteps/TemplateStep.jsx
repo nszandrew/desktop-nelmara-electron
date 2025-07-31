@@ -101,7 +101,25 @@ export default function TemplateStep({ onSubmit, treatmentInstanceId, initialVal
   };
 
   const handleCreateTreatment = () => {
-    window.location.href = '/treatments';
+    // Abrir em nova aba para não perder o progresso do cadastro
+    window.open('/treatments', '_blank');
+    
+    // Opcional: mostrar uma mensagem para o usuário
+    alert('Após criar o tratamento, volte para esta aba e atualize a lista clicando no botão "Atualizar Tratamentos" que aparecerá.');
+  };
+
+  const refreshTemplates = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await api.get("/templates/getall?page=0&size=100", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setTemplates(res.data);
+      alert('Lista de tratamentos atualizada!');
+    } catch (err) {
+      console.error("Erro ao atualizar tratamentos:", err);
+      alert("Erro ao atualizar a lista de tratamentos.");
+    }
   };
 
   const containerStyle = {
@@ -278,6 +296,19 @@ export default function TemplateStep({ onSubmit, treatmentInstanceId, initialVal
           >
             <span>+</span>
             Criar Novo Tratamento
+          </button>
+          
+          <button
+            onClick={refreshTemplates}
+            style={{
+              ...createButtonStyle,
+              backgroundColor: '#3498db',
+              marginLeft: '10px'
+            }}
+            onMouseOver={(e) => e.target.style.backgroundColor = '#2980b9'}
+            onMouseOut={(e) => e.target.style.backgroundColor = '#3498db'}
+          >
+            🔄 Atualizar Lista
           </button>
         </div>
       </div>

@@ -103,22 +103,45 @@ export default function PatientRegisterPage() {
     }
   };
 
-  const handleTemplateSubmit = async (templateId, answers) => {
+  // No PatientRegisterPage.jsx - ajuste o handleTemplateSubmit:
+
+const handleTemplateSubmit = async (templateId, answers, treatmentInstanceId) => {
+  try {
     const token = localStorage.getItem("token");
-    await api.post(
-      "/treatment-instance",
-      {
+    
+    if (treatmentInstanceId) {
+      // EDIÇÃO - Atualizar tratamento existente
+      await api.put(`/treatment-instances/${treatmentInstanceId}`, {
+        treatmentDate: new Date().toISOString(),
+        progress: "",
+        data: answers,
+      }, { 
+        headers: { Authorization: `Bearer ${token}` } 
+      });
+      
+      alert("Tratamento atualizado com sucesso!");
+      // NÃO redirecionar, apenas mostrar sucesso
+      
+    } else {
+      // CRIAÇÃO - Criar novo tratamento
+      await api.post("/treatment-instance", {
         patientId,
         templateId,
         treatmentDate: new Date().toISOString(),
         progress: "",
         data: answers,
-      },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    alert("Paciente e Template vinculados com sucesso!");
-    navigate("/");
-  };
+      }, { 
+        headers: { Authorization: `Bearer ${token}` } 
+      });
+      
+      alert("Paciente e Tratamento vinculados com sucesso!");
+      navigate("/");
+    }
+  } catch (err) {
+    console.error("Erro ao salvar tratamento:", err);
+    alert("Erro ao salvar tratamento.");
+  }
+};
 
   function formatCPF(cpf) {
     return cpf
