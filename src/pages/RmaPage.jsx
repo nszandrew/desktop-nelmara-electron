@@ -209,20 +209,21 @@ export default function RmaInteractivePage() {
     const currentPoints = savedPoints[page.id] || [];
 
     return (
-      <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
+      <div style={{ position: 'relative', display: 'inline-block', width: '800px', height: '600px' }}>
         <img
           ref={imageRef}
           src={page.imageSrc}
           alt={page.title}
           style={{
-            width: '100%',
-            maxWidth: '800px',
-            height: 'auto',
+            width: '800px',
+            height: '600px',
+            objectFit: 'contain',
             cursor: 'crosshair',
             borderRadius: '8px',
             boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
             opacity: imageLoaded ? 1 : 0.5,
-            transition: 'opacity 0.3s ease'
+            transition: 'opacity 0.3s ease',
+            backgroundColor: '#f8f9fa'
           }}
           onClick={handleImageClick}
           onLoad={() => setImageLoaded(true)}
@@ -554,7 +555,10 @@ export default function RmaInteractivePage() {
             backgroundColor: '#F5F5F5',
             borderRadius: '12px',
             padding: '2rem',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+            boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
           }}>
             <h2 style={{ 
               display: 'flex',
