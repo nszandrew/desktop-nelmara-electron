@@ -103,8 +103,6 @@ export default function PatientRegisterPage() {
     }
   };
 
-  // No PatientRegisterPage.jsx - ajuste o handleTemplateSubmit:
-
 const handleTemplateSubmit = async (templateId, answers, treatmentInstanceId) => {
   try {
     const token = localStorage.getItem("token");
