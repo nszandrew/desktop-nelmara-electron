@@ -1,36 +1,37 @@
 import React, { useState, useRef, useEffect } from "react";
-import { FaArrowLeft, FaDownload, FaUpload, FaTrash, FaEye, FaEyeSlash, FaFilePdf } from "react-icons/fa";
+import { FaArrowLeft, FaTrash, FaEye, FaEyeSlash, FaFilePdf } from "react-icons/fa";
 import Sidebar from "./Sidebar";
+import api from "../services/api";
 
-import cervicalImg from "public/assets/cervical.png";
-import dorsalImg from "public/assets/dorsal.png";
-import lombarImg from "public/assets/lombar.png";
-import membrosSuperioresImg from "public/assets/membros-superiores.png";
-import punhoCotoveloImg from "public/assets/punho-cotovelo.png";
-import tornozeloPeImg from "public/assets/tornozelo-pe.png";
-import joelhoImg from "public/assets/joelho.png";
-import quadrilImg from "public/assets/quadril.png";
-import muscularImg from "public/assets/muscular.png";
-import colicaMenstrualImg from "public/assets/colica-menstrual.png";
-import ATMImg from "public/assets/atm.png";
-import colunaImg from "public/assets/coluna.png";
-import anatomicoImg from "public/assets/modelo.png";
+import cervicalImg from "/assets/cervical.png";
+import dorsalImg from "/assets/dorsal.png";
+import lombarImg from "/assets/lombar.png";
+import membrosSuperioresImg from "/assets/membros-superiores.png";
+import punhoCotoveloImg from "/assets/punho-cotovelo.png";
+import tornozeloPeImg from "/assets/tornozelo-pe.png";
+import joelhoImg from "/assets/joelho.png";
+import quadrilImg from "/assets/quadril.png";
+import muscularImg from "/assets/muscular.png";
+import colicaMenstrualImg from "/assets/colica-menstrual.png";
+import ATMImg from "/assets/atm.png";
+import colunaImg from "/assets/coluna.png";
+import anatomicoImg from "/assets/modelo.png";
 
 export default function RmaInteractivePage() {
   const rmaPages = [
-    { id: 1, title: "CERVICAL", imageSrc: cervicalImg },
-    { id: 2, title: "DORSAL", imageSrc: dorsalImg },
-    { id: 3, title: "LOMBAR", imageSrc: lombarImg },
-    { id: 4, title: "MEMBROS SUPERIORES (MMSS)", imageSrc: membrosSuperioresImg },
-    { id: 5, title: "PUNHO / COTOVELO", imageSrc: punhoCotoveloImg },
-    { id: 6, title: "TORNOZELO E PÉ", imageSrc: tornozeloPeImg },
-    { id: 7, title: "JOELHO", imageSrc: joelhoImg },
-    { id: 8, title: "QUADRIL", imageSrc: quadrilImg },
-    { id: 9, title: "MUSCULAR", imageSrc: muscularImg },
-    { id: 10, title: "CÓLICA MENSTRUAL", imageSrc: colicaMenstrualImg },
-    { id: 11, title: "ATM", imageSrc: ATMImg },
-    { id: 12, title: "COLUNA", imageSrc: colunaImg },
-    { id: 13, title: "MODELOS ANATÔMICOS", imageSrc: anatomicoImg }
+    { id: 1, title: "CERVICAL", imageSrc: cervicalImg, imgName: "cervical" },
+    { id: 2, title: "DORSAL", imageSrc: dorsalImg, imgName: "dorsal" },
+    { id: 3, title: "LOMBAR", imageSrc: lombarImg, imgName: "lombar" },
+    { id: 4, title: "MEMBROS SUPERIORES (MMSS)", imageSrc: membrosSuperioresImg, imgName: "membros-superiores" },
+    { id: 5, title: "PUNHO / COTOVELO", imageSrc: punhoCotoveloImg, imgName: "punho-cotovelo" },
+    { id: 6, title: "TORNOZELO E PÉ", imageSrc: tornozeloPeImg, imgName: "tornozelo-pe" },
+    { id: 7, title: "JOELHO", imageSrc: joelhoImg, imgName: "joelho" },
+    { id: 8, title: "QUADRIL", imageSrc: quadrilImg, imgName: "quadril" },
+    { id: 9, title: "MUSCULAR", imageSrc: muscularImg, imgName: "muscular" },
+    { id: 10, title: "CÓLICA MENSTRUAL", imageSrc: colicaMenstrualImg, imgName: "colica-menstrual" },
+    { id: 11, title: "ATM", imageSrc: ATMImg, imgName: "atm" },
+    { id: 12, title: "COLUNA", imageSrc: colunaImg, imgName: "coluna" },
+    { id: 13, title: "MODELOS ANATÔMICOS", imageSrc: anatomicoImg, imgName: "modelo-anatomico" }
   ];
 
   // Estados
@@ -39,22 +40,34 @@ export default function RmaInteractivePage() {
   const [showPoints, setShowPoints] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [notification, setNotification] = useState("");
-  const fileInputRef = useRef(null);
 
-  // Simulate backend API calls (replace with real API)
-  const savePointsToBackend = async (points) => {
+  // Carregar pontos do backend ao montar o componente
+  useEffect(() => {
+    loadPointsFromBackend();
+  }, []);
+
+  // Funções de API para comunicação com o backend
+  const savePointToBackend = async (pageId, point) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      // const response = await fetch('/api/rma/points', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ points })
-      // });
-      showNotification("Pontos salvos com sucesso! ✅", "success");
+      const token = localStorage.getItem("token");
+      const currentPage = rmaPages.find(p => p.id === pageId);
+      
+      await api.post('/rma/points', 
+        { 
+          x: point.x,
+          y: point.y,
+          timestamp: point.timestamp,
+          imgName: currentPage.imgName
+        }, 
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      showNotification("Ponto salvo com sucesso! ✅", "success");
     } catch (error) {
-      showNotification("Erro ao salvar pontos ❌", "error");
+      console.error('Erro ao salvar ponto:', error);
+      showNotification("Erro ao salvar ponto ❌", "error");
     } finally {
       setIsLoading(false);
     }
@@ -63,84 +76,119 @@ export default function RmaInteractivePage() {
   const loadPointsFromBackend = async () => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      // const response = await fetch('/api/rma/points');
-      // const data = await response.json();
-      // setSavedPoints(data.points || {});
-      showNotification("Pontos carregados! 📥", "success");
+      const token = localStorage.getItem("token");
+      const response = await api.get('/rma/points', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.data && response.data.information) {
+        // Converter a estrutura do backend para a estrutura do frontend
+        const convertedPoints = {};
+        
+        response.data.information.forEach(imageGroup => {
+          // Encontrar o ID da página pelo imgName
+          const page = rmaPages.find(p => p.imgName === imageGroup.imageName);
+          if (page) {
+            convertedPoints[page.id] = imageGroup.rmaPoints.map(point => ({
+              id: point.id,
+              x: point.x,
+              y: point.y,
+              timestamp: point.timestamp
+            }));
+          }
+        });
+        
+        setSavedPoints(convertedPoints);
+        showNotification("Pontos carregados! 📥", "success");
+      } else {
+        setSavedPoints({});
+        showNotification("Nenhum ponto encontrado", "info");
+      }
     } catch (error) {
+      console.error('Erro ao carregar pontos:', error);
       showNotification("Erro ao carregar pontos ❌", "error");
+      setSavedPoints({});
     } finally {
       setIsLoading(false);
     }
   };
 
   // Funções de gerenciamento de pontos
-  const addPoint = (pageId, point) => {
+  const addPoint = async (pageId, point) => {
     const newPoint = {
       ...point,
-      id: Date.now() + Math.random(),
+      id: Date.now() + Math.random(), // ID temporário para o frontend
       timestamp: Date.now()
     };
     
-    setSavedPoints(prev => ({
-      ...prev,
-      [pageId]: [...(prev[pageId] || []), newPoint]
-    }));
-
+    // Atualizar estado local primeiro
+    const updatedPoints = {
+      ...savedPoints,
+      [pageId]: [...(savedPoints[pageId] || []), newPoint]
+    };
+    setSavedPoints(updatedPoints);
     showNotification("Ponto adicionado! 📍", "success");
+    
+    // Salvar no backend
+    await savePointToBackend(pageId, newPoint);
+    
+    // Recarregar do backend para pegar o ID real
+    await loadPointsFromBackend();
   };
 
-  const removePoint = (pageId, pointId) => {
-    setSavedPoints(prev => ({
-      ...prev,
-      [pageId]: prev[pageId]?.filter(p => p.id !== pointId) || []
-    }));
-    showNotification("Ponto removido! 🗑️", "info");
+  const removePoint = async (pageId, pointId) => {
+    try {
+      const token = localStorage.getItem("token");
+      
+      // Remover do backend primeiro
+      await api.delete(`/rma/points/${pointId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      // Atualizar estado local
+      const updatedPoints = {
+        ...savedPoints,
+        [pageId]: savedPoints[pageId]?.filter(p => p.id !== pointId) || []
+      };
+      setSavedPoints(updatedPoints);
+      showNotification("Ponto removido! 🗑️", "info");
+      
+    } catch (error) {
+      console.error('Erro ao remover ponto:', error);
+      showNotification("Erro ao remover ponto ❌", "error");
+    }
   };
 
-  const clearPagePoints = (pageId) => {
-    setSavedPoints(prev => ({
-      ...prev,
-      [pageId]: []
-    }));
-    showNotification("Todos os pontos da página foram removidos! 🧹", "info");
+  const clearPagePoints = async (pageId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const currentPage = rmaPages.find(p => p.id === pageId);
+      const currentPoints = savedPoints[pageId] || [];
+      
+      // Remover todos os pontos da página no backend
+      for (const point of currentPoints) {
+        await api.delete(`/rma/points/${point.id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      }
+      
+      // Atualizar estado local
+      const updatedPoints = {
+        ...savedPoints,
+        [pageId]: []
+      };
+      setSavedPoints(updatedPoints);
+      showNotification("Todos os pontos da página foram removidos! 🧹", "info");
+      
+    } catch (error) {
+      console.error('Erro ao limpar pontos:', error);
+      showNotification("Erro ao limpar pontos ❌", "error");
+    }
   };
 
   const showNotification = (message, type = "info") => {
     setNotification({ message, type });
     setTimeout(() => setNotification(""), 3000);
-  };
-
-  // Export/Import functions
-  const exportPoints = () => {
-    const dataStr = JSON.stringify(savedPoints, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `rma-pontos-${new Date().toISOString().split('T')[0]}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-    showNotification("Arquivo exportado! 💾", "success");
-  };
-
-  const importPoints = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const importedData = JSON.parse(e.target.result);
-          setSavedPoints(importedData);
-          showNotification("Pontos importados com sucesso! 📂", "success");
-        } catch (error) {
-          showNotification("Erro ao importar arquivo! ❌", "error");
-        }
-      };
-      reader.readAsText(file);
-    }
   };
 
   // Componente da imagem interativa
@@ -381,6 +429,7 @@ export default function RmaInteractivePage() {
               </h1>
               <p style={{ margin: '0.5rem 0 0 0', color: '#333333' }}>
                 Sistema de marcação de pontos • Total: {totalPoints} pontos
+                {isLoading && <span style={{ color: '#037E63', marginLeft: '1rem' }}>⏳ Sincronizando...</span>}
               </p>
             </div>
             
@@ -406,51 +455,11 @@ export default function RmaInteractivePage() {
               </button>
               
               <button
-                onClick={exportPoints}
-                disabled={totalPoints === 0}
-                style={{
-                  padding: '0.75rem 1.25rem',
-                  backgroundColor: totalPoints === 0 ? '#333333' : '#00C9A7',
-                  color: '#FFFFFF',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: totalPoints === 0 ? 'not-allowed' : 'pointer',
-                  fontSize: '0.9rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  fontWeight: '500',
-                  opacity: totalPoints === 0 ? 0.6 : 1
-                }}
-              >
-                <FaDownload /> Exportar
-              </button>
-              
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                style={{
-                  padding: '0.75rem 1.25rem',
-                  backgroundColor: '#029B7B',
-                  color: '#FFFFFF',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '0.9rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  fontWeight: '500'
-                }}
-              >
-                <FaUpload /> Importar
-              </button>
-              
-              <button
-                onClick={() => savePointsToBackend(savedPoints)}
+                onClick={loadPointsFromBackend}
                 disabled={isLoading}
                 style={{
                   padding: '0.75rem 1.25rem',
-                  backgroundColor: isLoading ? '#333333' : '#037E63',
+                  backgroundColor: isLoading ? '#333333' : '#029B7B',
                   color: '#FFFFFF',
                   border: 'none',
                   borderRadius: '8px',
@@ -460,7 +469,7 @@ export default function RmaInteractivePage() {
                   opacity: isLoading ? 0.6 : 1
                 }}
               >
-                {isLoading ? '⏳ Salvando...' : '💾 Salvar no Servidor'}
+                {isLoading ? '⏳ Carregando...' : '🔄 Recarregar'}
               </button>
             </div>
           </div>
@@ -569,15 +578,6 @@ export default function RmaInteractivePage() {
             <InteractiveImage page={currentPage} />
             <PointsPanel pageId={currentPageId} />
           </div>
-
-          {/* Input oculto para importar arquivo */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json"
-            onChange={importPoints}
-            style={{ display: 'none' }}
-          />
         </div>
       </div>
     </div>
