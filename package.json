@@ -1,16 +1,13 @@
 {
   "name": "nelmara-desktop",
-  "version": "1.0.0",
-  "description": "Desktop app for Nelmara",
-  "author": "Seu Nome",
+  "version": "1.0.1",
   "main": "main.js",
   "scripts": {
-    "dev": "concurrently \"npm run vite\" \"wait-on http://localhost:5173 && electron .\"",
-    "vite": "vite",
+    "dev": "concurrently -k \"vite\" \"electron .\"",
     "build": "vite build",
-    "electron": "electron .",
-    "make": "npm run build && electron-builder --win",
-    "dist": "npm run build && electron-builder --win"
+    "package": "electron-forge package",
+    "start": "electron-forge start",
+    "make": "vite build && electron-forge make"
   },
   "build": {
     "appId": "com.nelmara.desktop",

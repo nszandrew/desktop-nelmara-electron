@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { FaArrowLeft, FaTrash, FaEye, FaEyeSlash, FaFilePdf } from "react-icons/fa";
+import { FaArrowLeft, FaTrash, FaEye, FaEyeSlash, FaFilePdf, FaPlus, FaTimes } from "react-icons/fa";
 import Sidebar from "./Sidebar";
 import api from "../services/api";
 
@@ -40,6 +40,7 @@ export default function RmaInteractivePage() {
   const [showPoints, setShowPoints] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [notification, setNotification] = useState("");
+  const [selectedPointType, setSelectedPointType] = useState("PLUS"); // PLUS ou X
 
   // Carregar pontos do backend ao montar o componente
   useEffect(() => {
@@ -58,7 +59,8 @@ export default function RmaInteractivePage() {
           x: point.x,
           y: point.y,
           timestamp: point.timestamp,
-          imgName: currentPage.imgName
+          imgName: currentPage.imgName,
+          format: point.format // Enviando o formato do ponto
         }, 
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -93,7 +95,8 @@ export default function RmaInteractivePage() {
               id: point.id,
               x: point.x,
               y: point.y,
-              timestamp: point.timestamp
+              timestamp: point.timestamp,
+              format: point.format || "PLUS" // Default para PLUS se não houver formato
             }));
           }
         });
@@ -118,7 +121,8 @@ export default function RmaInteractivePage() {
     const newPoint = {
       ...point,
       id: Date.now() + Math.random(), // ID temporário para o frontend
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      format: selectedPointType // Adicionar o tipo de ponto selecionado
     };
     
     // Atualizar estado local primeiro
@@ -127,7 +131,7 @@ export default function RmaInteractivePage() {
       [pageId]: [...(savedPoints[pageId] || []), newPoint]
     };
     setSavedPoints(updatedPoints);
-    showNotification("Ponto adicionado! 📍", "success");
+    showNotification(`Ponto ${selectedPointType === 'PLUS' ? '+' : 'X'} adicionado! 📍`, "success");
     
     // Salvar no backend
     await savePointToBackend(pageId, newPoint);
@@ -191,6 +195,48 @@ export default function RmaInteractivePage() {
     setTimeout(() => setNotification(""), 3000);
   };
 
+  // Componente do ponto personalizado
+  const CustomPoint = ({ point, onClick }) => {
+    const isPlus = point.format === "PLUS";
+    
+    return (
+      <div
+        style={{
+          position: 'absolute',
+          left: `${point.x}%`,
+          top: `${point.y}%`,
+          width: '20px',
+          height: '20px',
+          cursor: 'pointer',
+          transform: 'translate(-50%, -50%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '16px',
+          fontWeight: 'bold',
+          color: '#FFFFFF',
+          backgroundColor: isPlus ? '#037E63' : '#E74C3C',
+          borderRadius: isPlus ? '50%' : '4px',
+          border: '2px solid white',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+          animation: 'pulse 2s infinite',
+          transition: 'all 0.2s ease',
+          zIndex: 10
+        }}
+        onClick={onClick}
+        onMouseEnter={(e) => {
+          e.target.style.transform = 'translate(-50%, -50%) scale(1.2)';
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.transform = 'translate(-50%, -50%) scale(1)';
+        }}
+        title={`Tipo: ${isPlus ? 'Plus (+)' : 'X'}\nClique para remover\nCriado em: ${new Date(point.timestamp).toLocaleString()}`}
+      >
+        {isPlus ? '+' : '×'}
+      </div>
+    );
+  };
+
   // Componente da imagem interativa
   const InteractiveImage = ({ page }) => {
     const imageRef = useRef(null);
@@ -247,34 +293,13 @@ export default function RmaInteractivePage() {
 
         {/* Renderizar pontos salvos */}
         {showPoints && currentPoints.map(point => (
-          <div
+          <CustomPoint
             key={point.id}
-            style={{
-              position: 'absolute',
-              left: `${point.x}%`,
-              top: `${point.y}%`,
-              width: '16px',
-              height: '16px',
-              backgroundColor: '#037E63',
-              borderRadius: '50%',
-              border: '3px solid white',
-              cursor: 'pointer',
-              transform: 'translate(-50%, -50%)',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
-              animation: 'pulse 2s infinite',
-              transition: 'all 0.2s ease'
-            }}
+            point={point}
             onClick={(e) => {
               e.stopPropagation();
               removePoint(page.id, point.id);
             }}
-            onMouseEnter={(e) => {
-              e.target.style.transform = 'translate(-50%, -50%) scale(1.2)';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.transform = 'translate(-50%, -50%) scale(1)';
-            }}
-            title={`Clique para remover\nCriado em: ${new Date(point.timestamp).toLocaleString()}`}
           />
         ))}
 
@@ -293,6 +318,8 @@ export default function RmaInteractivePage() {
   // Painel de controle dos pontos
   const PointsPanel = ({ pageId }) => {
     const currentPoints = savedPoints[pageId] || [];
+    const plusPoints = currentPoints.filter(p => p.format === "PLUS");
+    const xPoints = currentPoints.filter(p => p.format === "X");
     
     return (
       <div style={{
@@ -304,7 +331,9 @@ export default function RmaInteractivePage() {
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <h4 style={{ margin: 0, color: '#025C4A' }}>
-            📍 Pontos Marcados ({currentPoints.length})
+            📍 Pontos Marcados ({currentPoints.length}) • 
+            <span style={{ color: '#037E63', marginLeft: '0.5rem' }}>+ {plusPoints.length}</span> • 
+            <span style={{ color: '#E74C3C', marginLeft: '0.5rem' }}>× {xPoints.length}</span>
           </h4>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button
@@ -348,7 +377,7 @@ export default function RmaInteractivePage() {
         </div>
 
         {currentPoints.length === 0 ? (
-          <p style={{ color: '#333333', fontStyle: 'italic', margin: 0 }}>
+          <p style={{ color: '#666', fontStyle: 'italic', margin: 0, textAlign: 'center', padding: '1rem' }}>
             Nenhum ponto marcado. Clique na imagem para adicionar pontos.
           </p>
         ) : (
@@ -360,11 +389,26 @@ export default function RmaInteractivePage() {
                   padding: '0.75rem',
                   backgroundColor: '#FFFFFF',
                   borderRadius: '8px',
-                  border: '1px solid #00C9A7',
+                  border: `2px solid ${point.format === 'PLUS' ? '#037E63' : '#E74C3C'}`,
                   fontSize: '0.85rem'
                 }}
               >
-                <div style={{ fontWeight: 'bold', color: '#025C4A' }}>
+                <div style={{ 
+                  fontWeight: 'bold', 
+                  color: point.format === 'PLUS' ? '#037E63' : '#E74C3C',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  marginBottom: '0.25rem'
+                }}>
+                  <span style={{ 
+                    fontSize: '1rem',
+                    backgroundColor: point.format === 'PLUS' ? '#037E6315' : '#E74C3C15',
+                    padding: '2px 6px',
+                    borderRadius: '4px'
+                  }}>
+                    {point.format === 'PLUS' ? '+' : '×'}
+                  </span>
                   Ponto {index + 1}
                 </div>
                 <div style={{ color: '#333333' }}>
@@ -492,6 +536,133 @@ export default function RmaInteractivePage() {
             </div>
           )}
 
+          {/* Seletor de tipo de ponto - Design Clean */}
+          <div style={{
+            padding: '1rem',
+            backgroundColor: '#FFFFFF',
+            borderRadius: '12px',
+            marginBottom: '2rem',
+            border: '1px solid #e9ecef',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+          }}>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '1rem'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <span style={{ 
+                  color: '#025C4A', 
+                  fontSize: '1rem', 
+                  fontWeight: '500' 
+                }}>
+                  Tipo de Ponto:
+                </span>
+                <div style={{
+                  display: 'flex',
+                  backgroundColor: '#f8f9fa',
+                  borderRadius: '8px',
+                  padding: '4px',
+                  border: '1px solid #e9ecef'
+                }}>
+                  <button
+                    onClick={() => setSelectedPointType("PLUS")}
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: selectedPointType === "PLUS" ? '#037E63' : 'transparent',
+                      color: selectedPointType === "PLUS" ? '#FFFFFF' : '#037E63',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '1rem',
+                      fontWeight: '600',
+                      transition: 'all 0.2s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      minWidth: '60px',
+                      justifyContent: 'center'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (selectedPointType !== "PLUS") {
+                        e.target.style.backgroundColor = '#037E6315';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (selectedPointType !== "PLUS") {
+                        e.target.style.backgroundColor = 'transparent';
+                      }
+                    }}
+                  >
+                    +
+                  </button>
+                  <button
+                    onClick={() => setSelectedPointType("X")}
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: selectedPointType === "X" ? '#E74C3C' : 'transparent',
+                      color: selectedPointType === "X" ? '#FFFFFF' : '#E74C3C',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '1rem',
+                      fontWeight: '600',
+                      transition: 'all 0.2s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      minWidth: '60px',
+                      justifyContent: 'center'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (selectedPointType !== "X") {
+                        e.target.style.backgroundColor = '#E74C3C15';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (selectedPointType !== "X") {
+                        e.target.style.backgroundColor = 'transparent';
+                      }
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+              
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '0.9rem',
+                color: '#666'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '4px 8px',
+                  backgroundColor: selectedPointType === "PLUS" ? '#037E6315' : '#E74C3C15',
+                  borderRadius: '6px',
+                  border: `1px solid ${selectedPointType === "PLUS" ? '#037E63' : '#E74C3C'}20`
+                }}>
+                  <span style={{ 
+                    color: selectedPointType === "PLUS" ? '#037E63' : '#E74C3C',
+                    fontWeight: '600',
+                    fontSize: '1rem'
+                  }}>
+                    {selectedPointType === "PLUS" ? '+' : '×'}
+                  </span>
+                  <span style={{ color: '#666', fontSize: '0.85rem' }}>
+                    Selecionado
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Seletor de páginas */}
           <div style={{
             display: 'grid',
@@ -501,6 +672,8 @@ export default function RmaInteractivePage() {
           }}>
             {rmaPages.map(page => {
               const pointCount = savedPoints[page.id]?.length || 0;
+              const plusCount = savedPoints[page.id]?.filter(p => p.format === "PLUS").length || 0;
+              const xCount = savedPoints[page.id]?.filter(p => p.format === "X").length || 0;
               const isActive = page.id === currentPageId;
               
               return (
@@ -543,6 +716,13 @@ export default function RmaInteractivePage() {
                       opacity: 0.8
                     }}>
                       📍 {pointCount} ponto{pointCount !== 1 ? 's' : ''}
+                      {(plusCount > 0 || xCount > 0) && (
+                        <div style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                          {plusCount > 0 && <span style={{ color: isActive ? '#FFFFFF' : '#037E63' }}>+{plusCount}</span>}
+                          {plusCount > 0 && xCount > 0 && ' '}
+                          {xCount > 0 && <span style={{ color: isActive ? '#FFFFFF' : '#E74C3C' }}>×{xCount}</span>}
+                        </div>
+                      )}
                     </div>
                   )}
                 </button>
@@ -574,7 +754,8 @@ export default function RmaInteractivePage() {
             <p style={{ 
               color: '#333333', 
               marginBottom: '1.5rem',
-              fontSize: '1rem'
+              fontSize: '1rem',
+              textAlign: 'center'
             }}>
               Clique na imagem para marcar pontos • Clique nos pontos para removê-los
             </p>
