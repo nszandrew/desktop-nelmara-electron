@@ -21,7 +21,7 @@ export default defineConfig({
         target: 'https://api-nelmara-ribeiro.site',
         changeOrigin: true,
         secure: false,
-      },
-    },
-  },
+      }
+    }
+  }
 });

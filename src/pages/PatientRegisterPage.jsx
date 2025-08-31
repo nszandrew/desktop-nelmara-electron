@@ -219,16 +219,6 @@ const handleTemplateSubmit = async (templateId, answers, treatmentInstanceId) =>
         {step < steps.length - 1 ? (
           <button
             onClick={async () => {
-              const currentKey = steps[step].key;
-              const currentData = formData[currentKey];
-              if (!validateStep(currentData, currentKey)) {
-                alert(
-                  "Por favor, preencha todos os campos obrigatórios antes de continuar."
-                );
-                return;
-              }
-
-              // Se estamos indo do último step de formulário para o template...
               if (step === steps.length - 2 && !patientId) {
                 try {
                   const token = localStorage.getItem("token");

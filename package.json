@@ -7,7 +7,8 @@
     "build": "vite build",
     "package": "electron-forge package",
     "start": "electron-forge start",
-    "make": "vite build && electron-forge make"
+    "make": "vite build && electron-forge make",
+    "dist": "electron-builder --win"
   },
   "build": {
     "appId": "com.nelmara.desktop",
@@ -24,7 +25,9 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ]
     }
@@ -38,8 +41,11 @@
     "wait-on": "^7.0.0"
   },
   "dependencies": {
+    "electron-updater": "^6.0.0",
+    "framer-motion": "^12.23.12",    
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
-    "electron-updater": "^6.0.0"
+    "react-icons": "^5.5.0",
+    "react-router-dom": "^7.8.0"
   }
 }

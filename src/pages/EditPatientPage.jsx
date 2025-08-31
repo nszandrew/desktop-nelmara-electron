@@ -243,12 +243,6 @@ export default function EditPatientPage() {
         {step < steps.length - 1 ? (
           <button
             onClick={() => {
-              const currentKey = steps[step].key;
-              const currentData = formData[currentKey];
-              if (!validateStep(currentData, currentKey)) {
-                alert("Preencha todos os campos obrigatórios.");
-                return;
-              }
               setStep(step + 1);
             }}
             style={{
