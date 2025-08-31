@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { FaArrowLeft, FaTrash, FaEye, FaEyeSlash, FaFilePdf, FaPlus, FaTimes } from "react-icons/fa";
+import { FaArrowLeft, FaTrash, FaEye, FaEyeSlash, FaFilePdf, FaPlus, FaTimes, FaEdit } from "react-icons/fa";
 import Sidebar from "./Sidebar";
 import api from "../services/api";
 
@@ -16,6 +16,65 @@ import colicaMenstrualImg from "/assets/colica-menstrual.png";
 import ATMImg from "/assets/atm.png";
 import colunaImg from "/assets/coluna.png";
 import anatomicoImg from "/assets/modelo.png";
+
+// Modal para editar anotação
+function AnnotationModal({ open, onClose, point, onSave }) {
+  const [text, setText] = useState('');
+
+  useEffect(() => {
+    setText(point?.imgAnnotation || '');
+  }, [point]);
+
+  function handleSave() {
+    onSave(text);
+    onClose();
+  }
+
+  if (!open || !point) return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0, left: 0, width: '100vw', height: '100vh',
+      background: 'rgba(2,92,74,0.25)', zIndex: 9999,
+      display: 'flex', alignItems: 'center', justifyContent: 'center'
+    }}>
+      <div style={{
+        background: '#FFFFFF', borderRadius: 12, padding: 24, minWidth: 320,
+        boxShadow: '0 8px 32px rgba(2,92,74,0.15)', border: '2px solid #00C9A7',
+        display: 'flex', flexDirection: 'column', gap: 14
+      }}>
+        <h4 style={{ color: '#037E63', margin: 0 }}>Editar anotação</h4>
+        <textarea
+          value={text}
+          onChange={e => setText(e.target.value)}
+          style={{
+            minHeight: 80, maxHeight: 180, resize: 'vertical',
+            border: '1px solid #025C4A', borderRadius: 8,
+            padding: 10, fontSize: 15, color: '#025C4A', background: '#F5F5F5'
+          }}
+          placeholder="Digite sua anotação aqui..."
+        />
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button
+            onClick={handleSave}
+            style={{
+              background: '#037E63', color: '#FFF', border: 'none',
+              borderRadius: 8, padding: '8px 18px', fontWeight: 600, cursor: 'pointer'
+            }}
+          >Salvar</button>
+          <button
+            onClick={onClose}
+            style={{
+              background: '#F5F5F5', color: '#025C4A', border: '1px solid #00C9A7',
+              borderRadius: 8, padding: '8px 18px', fontWeight: 500, cursor: 'pointer'
+            }}
+          >Cancelar</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function RmaInteractivePage() {
   const rmaPages = [
@@ -41,6 +100,7 @@ export default function RmaInteractivePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [notification, setNotification] = useState("");
   const [selectedPointType, setSelectedPointType] = useState("PLUS"); // PLUS ou X
+  const [annotationModal, setAnnotationModal] = useState({ open: false, point: null, pageId: null });
 
   // Carregar pontos do backend ao montar o componente
   useEffect(() => {
@@ -96,7 +156,9 @@ export default function RmaInteractivePage() {
               x: point.x,
               y: point.y,
               timestamp: point.timestamp,
-              format: point.format || "PLUS" // Default para PLUS se não houver formato
+              format: point.format || "PLUS",
+              imgAnnotation: point.imgAnnotation, // <-- Corrigido para popular a anotação
+              imgName: point.imgName
             }));
           }
         });
@@ -195,24 +257,42 @@ export default function RmaInteractivePage() {
     setTimeout(() => setNotification(""), 3000);
   };
 
+  // Função para salvar anotação no backend
+  const saveAnnotation = async (pageId, point, annotationText) => {
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      await api.patch('/rma/points/annotation', null, {
+        params: { annotation: annotationText, pointId: point.id },
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      showNotification("Anotação salva com sucesso! 📝", "success");
+      await loadPointsFromBackend();
+    } catch (error) {
+      console.error('Erro ao salvar anotação:', error);
+      showNotification("Erro ao salvar anotação ❌", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Componente do ponto personalizado
   const CustomPoint = ({ point, onClick }) => {
     const isPlus = point.format === "PLUS";
-    
     return (
       <div
         style={{
           position: 'absolute',
           left: `${point.x}%`,
           top: `${point.y}%`,
-          width: '20px',
-          height: '20px',
+          width: '24px',
+          height: '24px',
           cursor: 'pointer',
           transform: 'translate(-50%, -50%)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: '16px',
+          fontSize: '18px',
           fontWeight: 'bold',
           color: '#FFFFFF',
           backgroundColor: isPlus ? '#037E63' : '#E74C3C',
@@ -223,16 +303,47 @@ export default function RmaInteractivePage() {
           transition: 'all 0.2s ease',
           zIndex: 10
         }}
-        onClick={onClick}
-        onMouseEnter={(e) => {
+        onClick={e => {
+          e.stopPropagation();
+          onClick();
+        }}
+        onMouseEnter={e => {
           e.target.style.transform = 'translate(-50%, -50%) scale(1.2)';
         }}
-        onMouseLeave={(e) => {
+        onMouseLeave={e => {
           e.target.style.transform = 'translate(-50%, -50%) scale(1)';
         }}
-        title={`Tipo: ${isPlus ? 'Plus (+)' : 'X'}\nClique para remover\nCriado em: ${new Date(point.timestamp).toLocaleString()}`}
+        title={`Tipo: ${isPlus ? 'Plus (+)' : 'X'}\nClique para remover\nClique no lápis para anotação\nCriado em: ${new Date(point.timestamp).toLocaleString()}`}
       >
         {isPlus ? '+' : '×'}
+        <span
+          style={{
+            position: 'absolute',
+            right: -18,
+            top: -8,
+            background: '#00C9A7',
+            borderRadius: '50%',
+            width: 22,
+            height: 22,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            cursor: 'pointer',
+            border: '2px solid #FFF'
+          }}
+          title="Editar anotação"
+          onClick={e => {
+            e.stopPropagation();
+            setAnnotationModal({
+              open: true,
+              point,
+              pageId: point.imgName ? rmaPages.find(p => p.imgName === point.imgName)?.id : currentPageId
+            });
+          }}
+        >
+          <FaEdit size={14} color="#025C4A" />
+        </span>
       </div>
     );
   };
@@ -296,10 +407,7 @@ export default function RmaInteractivePage() {
           <CustomPoint
             key={point.id}
             point={point}
-            onClick={(e) => {
-              e.stopPropagation();
-              removePoint(page.id, point.id);
-            }}
+            onClick={() => removePoint(page.id, point.id)}
           />
         ))}
 
@@ -390,7 +498,8 @@ export default function RmaInteractivePage() {
                   backgroundColor: '#FFFFFF',
                   borderRadius: '8px',
                   border: `2px solid ${point.format === 'PLUS' ? '#037E63' : '#E74C3C'}`,
-                  fontSize: '0.85rem'
+                  fontSize: '0.85rem',
+                  position: 'relative'
                 }}
               >
                 <div style={{ 
@@ -416,6 +525,33 @@ export default function RmaInteractivePage() {
                 </div>
                 <div style={{ color: '#333333', fontSize: '0.75rem', marginTop: '0.25rem' }}>
                   {new Date(point.timestamp).toLocaleString()}
+                </div>
+                <div style={{ marginTop: 8 }}>
+                  <span style={{ color: '#025C4A', fontWeight: 500 }}>Anotação:</span>
+                  <div
+                    style={{
+                      background: '#F5F5F5',
+                      borderRadius: 6,
+                      padding: '6px 10px',
+                      minHeight: 24,
+                      marginTop: 4,
+                      fontSize: 14,
+                      color: '#333333',
+                      cursor: 'pointer',
+                      border: '1px solid #00C9A7',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8
+                    }}
+                    title="Clique no lápis do ponto para editar anotação"
+                  >
+                    <span>
+                      {point.imgAnnotation && point.imgAnnotation.trim() !== ''
+                        ? point.imgAnnotation
+                        : <span style={{ color: '#666' }}>Sem anotação</span>
+                      }
+                    </span>
+                  </div>
                 </div>
               </div>
             ))}
@@ -762,6 +898,12 @@ export default function RmaInteractivePage() {
             
             <InteractiveImage page={currentPage} />
             <PointsPanel pageId={currentPageId} />
+            <AnnotationModal
+              open={annotationModal.open}
+              point={annotationModal.point}
+              onClose={() => setAnnotationModal({ open: false, point: null, pageId: null })}
+              onSave={text => saveAnnotation(annotationModal.pageId, annotationModal.point, text)}
+            />
           </div>
         </div>
       </div>

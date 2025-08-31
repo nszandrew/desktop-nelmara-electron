@@ -29,7 +29,8 @@
             "x64"
           ]
         }
-      ]
+      ],
+      "icon": "src/assets/logo-nelmara.ico"
     }
   },
   "devDependencies": {
@@ -42,10 +43,11 @@
   },
   "dependencies": {
     "electron-updater": "^6.0.0",
-    "framer-motion": "^12.23.12",    
+    "framer-motion": "^12.23.12",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "react-icons": "^5.5.0",
+    "react-quill": "^2.0.0",
     "react-router-dom": "^7.8.0"
   }
 }
