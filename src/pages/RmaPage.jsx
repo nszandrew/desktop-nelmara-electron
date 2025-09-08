@@ -16,6 +16,12 @@ import colicaMenstrualImg from "/assets/colica-menstrual.png";
 import ATMImg from "/assets/atm.png";
 import colunaImg from "/assets/coluna.png";
 import anatomicoImg from "/assets/modelo.png";
+import balancementoDeJoelhos from "/assets/balanceamento-de-joelhos.png";
+import distencaoMuscular from "/assets/distensao-muscular.png";
+import edemaDeJoelho from "/assets/edema-de-joelho.png";
+import mao from "/assets/mao.png";
+import superiorLateral from "/assets/superior-lateral.png";
+import quadril2 from "/assets/quadril-2.png";
 
 // Modal para editar anotação
 function AnnotationModal({ open, onClose, point, onSave }) {
@@ -90,7 +96,13 @@ export default function RmaInteractivePage() {
     { id: 10, title: "CÓLICA MENSTRUAL", imageSrc: colicaMenstrualImg, imgName: "colica-menstrual" },
     { id: 11, title: "ATM", imageSrc: ATMImg, imgName: "atm" },
     { id: 12, title: "COLUNA", imageSrc: colunaImg, imgName: "coluna" },
-    { id: 13, title: "MODELOS ANATÔMICOS", imageSrc: anatomicoImg, imgName: "modelo-anatomico" }
+    { id: 13, title: "MODELOS ANATÔMICOS", imageSrc: anatomicoImg, imgName: "modelo-anatomico" },
+    { id: 14, title: "BALANCEAMENTO DE JOELHOS", imageSrc: balancementoDeJoelhos, imgName: "balanceamento-de-joelhos" },
+    { id: 15, title: "DISTENÇÃO MUSCULAR", imageSrc: distencaoMuscular, imgName: "distencao-muscular" },
+    { id: 16, title: "MÃO", imageSrc: mao, imgName: "mao" },
+    { id: 17, title: "EDEMA DE JOELHO", imageSrc: edemaDeJoelho, imgName: "edema-de-joelho" },
+    { id: 18, title: "SUPERIOR LATERAL", imageSrc: superiorLateral, imgName: "superior-lateral" },
+    { id: 19, title: "QUADRIL - 2", imageSrc: quadril2, imgName: "quadril-2" },
   ];
 
   // Estados
