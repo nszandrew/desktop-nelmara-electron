@@ -7,8 +7,6 @@ import PatientRegisterPage from './pages/PatientRegisterPage';
 import EditPatientPage from './pages/EditPatientPage.jsx';
 import PatientViewPage from './pages/PatientViewPage.jsx';
 import TreatmentTemplatePage from './pages/TreatmentTemplateList.jsx';
-import TreatmentCreateTemplatePage from './pages/CreateTreatmentTemplate.jsx';
-import TreatmentEditTemplatePage from './pages/EditTreatmentTemplate.jsx';
 import RmaPage from './pages/RmaPage.jsx';
 
 function ProtectedRoute({ children }) {
@@ -149,10 +147,8 @@ export default function App() {
               <Route path="/edit-patient/:id" element={<EditPatientPage />} />
               <Route path="/view-patient/:id" element={<PatientViewPage />} />
               <Route path="/treatments" element={<TreatmentTemplatePage />} />
-              <Route path="/treatments/new" element={<TreatmentCreateTemplatePage />} />
               <Route path="/rma" element={<RmaPage />} />
               <Route path="/rma/:page" element={<RmaPage />} />
-              <Route path="/treatments/edit/:id" element={<TreatmentEditTemplatePage />} />
               <Route
                 path="/"
                 element={

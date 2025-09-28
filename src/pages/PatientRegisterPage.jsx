@@ -1,30 +1,19 @@
+// src/pages/PatientRegisterPage.jsx
 import React, { useState } from "react";
 import PatientStep from "./registerSteps/PatientStep";
-import EvaluationStep from "./registerSteps/EvaluationStep";
-import MedicalHistoryStep from "./registerSteps/MedicalHistoryStep";
-import LifestyleStep from "./registerSteps/LifestyleStep";
-import ProgressBar from "./registerSteps/ProgressBar";
 import TemplateStep from "./registerSteps/TemplateStep";
+import ProgressBar from "./registerSteps/ProgressBar";
 import api from "../services/api";
 import { useNavigate } from "react-router-dom";
 
 export default function PatientRegisterPage() {
   const navigate = useNavigate();
-  const [templateData, setTemplateData] = useState({});
   const [patientId, setPatientId] = useState(null);
   const [step, setStep] = useState(0);
-  const [formData, setFormData] = useState({
-    patient: {},
-    evaluation: {},
-    medicalHistory: {},
-    lifestyle: {},
-  });
+  const [formData, setFormData] = useState({ patient: {} });
 
   const steps = [
     { component: PatientStep, key: "patient" },
-    { component: EvaluationStep, key: "evaluation" },
-    { component: MedicalHistoryStep, key: "medicalHistory" },
-    { component: LifestyleStep, key: "lifestyle" },
     { component: TemplateStep, key: "template" },
   ];
 
@@ -37,55 +26,28 @@ export default function PatientRegisterPage() {
     }));
   };
 
-  const handleSubmit = async () => {
+  const handlePatientSubmit = async () => {
     try {
       const token = localStorage.getItem("token");
+
+      // função para garantir uma ISO válida
+      const getDateIso = (val) => {
+        if (!val) return new Date().toISOString();
+        const d = new Date(val);
+        return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+      };
 
       const payload = {
         patient: {
           fullName: formData.patient.fullName || "",
-          cpf: formatCPF(formData.patient.cpf || ""),
+          cpf: formData.patient.cpf || "",
           email: formData.patient.email || "",
           phone: formData.patient.phone || "",
-          dateOfBirth: new Date(formData.patient.dateOfBirth).toISOString(),
+          dateOfBirth: getDateIso(formData.patient.dateOfBirth),
           address: formData.patient.address || "",
           profession: formData.patient.profession || "",
           indication: formData.patient.indication || "",
           gender: formData.patient.gender || "MALE",
-        },
-        evaluation: {
-          date: formData.evaluation.date || "",
-          mainComplaint: formData.evaluation.mainComplaint || "",
-          hmp: formData.evaluation.hmp || "",
-          hma: formData.evaluation.hma || "",
-          weight: parseFloat(formData.evaluation.weight || 0),
-          height: parseFloat(formData.evaluation.height || 0),
-          painLevel: parseInt(formData.evaluation.painLevel || 0),
-          heartRate: formData.evaluation.heartRate || "",
-          respiratoryRate: formData.evaluation.respiratoryRate || "",
-        },
-        medicalHistory: {
-          associatedConditions:
-            formData.medicalHistory.associatedConditions || "",
-          allergy: !!formData.medicalHistory.allergy,
-          enzymeDeficiencyG6PD: !!formData.medicalHistory.enzymeDeficiencyG6PD,
-          sinusitis: !!formData.medicalHistory.sinusitis,
-          rhinitis: !!formData.medicalHistory.rhinitis,
-          diabetesMellitus: !!formData.medicalHistory.diabetesMellitus,
-          highBloodPressure: !!formData.medicalHistory.highBloodPressure,
-          cardiopathy: !!formData.medicalHistory.cardiopathy,
-          anemia: !!formData.medicalHistory.anemia,
-          hyperthyroidism: !!formData.medicalHistory.hyperthyroidism,
-          recentCovidVaccine: !!formData.medicalHistory.recentCovidVaccine,
-          recentHemorrhage: !!formData.medicalHistory.recentHemorrhage,
-        },
-        lifestyle: {
-          physicalActivity: formData.lifestyle.physicalActivity || "",
-          pastSurgeries: formData.lifestyle.pastSurgeries || "",
-          fractures: formData.lifestyle.fractures || "",
-          smoking: !!formData.lifestyle.smoking,
-          alcohol: !!formData.lifestyle.alcohol,
-          medications: formData.lifestyle.medications || "",
         },
       };
 
@@ -94,88 +56,32 @@ export default function PatientRegisterPage() {
       });
       setPatientId(res.data.id);
       setStep(step + 1);
-
       alert("Paciente registrado com sucesso!");
-      navigate("/");
     } catch (err) {
       console.error("Erro ao registrar paciente:", err);
-      alert("Erro ao registrar paciente.");
+      alert("Erro ao registrar paciente. Corrija os dados e tente novamente.");
     }
   };
 
-const handleTemplateSubmit = async (templateId, answers, treatmentInstanceId) => {
-  try {
-    const token = localStorage.getItem("token");
-    
-    if (treatmentInstanceId) {
-      // EDIÇÃO - Atualizar tratamento existente
-      await api.put(`/treatment-instances/${treatmentInstanceId}`, {
-        treatmentDate: new Date().toISOString(),
-        progress: "",
-        data: answers,
-      }, { 
-        headers: { Authorization: `Bearer ${token}` } 
-      });
-      
-      alert("Tratamento atualizado com sucesso!");
-      // NÃO redirecionar, apenas mostrar sucesso
-      
-    } else {
-      // CRIAÇÃO - Criar novo tratamento
-      await api.post("/treatment-instance", {
-        patientId,
-        templateId,
-        treatmentDate: new Date().toISOString(),
-        progress: "",
-        data: answers,
-      }, { 
-        headers: { Authorization: `Bearer ${token}` } 
-      });
-      
-      alert("Paciente e Tratamento vinculados com sucesso!");
-      navigate("/");
-    }
-  } catch (err) {
-    console.error("Erro ao salvar tratamento:", err);
-    alert("Erro ao salvar tratamento.");
-  }
-};
 
-  function formatCPF(cpf) {
-    return cpf
-      .replace(/\D/g, "")
-      .replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-  }
 
-  const validateStep = (data, key) => {
-    switch (key) {
-      case "patient":
-        return (
-          data.fullName &&
-          data.email &&
-          data.phone &&
-          data.dateOfBirth &&
-          data.gender &&
-          data.cpf
-        );
-      case "evaluation":
-        return (
-          data.date &&
-          data.mainComplaint &&
-          data.hmp &&
-          data.hma &&
-          data.weight &&
-          data.height &&
-          data.painLevel
-        );
-      case "medicalHistory":
-        return true; // pelo menos validando presença de bool
-      case "lifestyle":
-        return (
-          data.physicalActivity !== undefined && data.medications !== undefined
-        );
-      default:
-        return true;
+  const handleTemplateSubmit = async (templateId, answers, treatmentInstanceId) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (treatmentInstanceId) {
+        await api.put(`/treatment-instance/${treatmentInstanceId}`, {
+          treatmentDate: new Date().toISOString(),
+          progress: initialValues.progress || [],
+          data: answers,
+        }, { headers: { Authorization: `Bearer ${token}` } });
+        alert("Tratamento atualizado com sucesso!");
+      } else {
+        alert("Paciente e Tratamento vinculados com sucesso!");
+        navigate("/");  
+      }
+    } catch (err) {
+      console.error("Erro ao salvar tratamento:", err);
+      alert("Erro ao salvar tratamento.");
     }
   };
 
@@ -199,7 +105,7 @@ const handleTemplateSubmit = async (templateId, answers, treatmentInstanceId) =>
       <div style={styles.stepWrapper}>
         {step === steps.length - 1 ? (
           patientId ? (
-            <TemplateStep onSubmit={handleTemplateSubmit} />
+            <TemplateStep onSubmit={handleTemplateSubmit} patientId={patientId} />
           ) : (
             <div>Salvando paciente...</div>
           )
@@ -216,95 +122,9 @@ const handleTemplateSubmit = async (templateId, answers, treatmentInstanceId) =>
             ← Voltar
           </button>
         )}
-        {step < steps.length - 1 ? (
-          <button
-            onClick={async () => {
-              if (step === steps.length - 2 && !patientId) {
-                try {
-                  const token = localStorage.getItem("token");
-
-                  const payload = {
-                    patient: {
-                      fullName: formData.patient.fullName || "",
-                      cpf: formatCPF(formData.patient.cpf || ""),
-                      email: formData.patient.email || "",
-                      phone: formData.patient.phone || "",
-                      dateOfBirth: new Date(
-                        formData.patient.dateOfBirth
-                      ).toISOString(),
-                      address: formData.patient.address || "",
-                      profession: formData.patient.profession || "",
-                      indication: formData.patient.indication || "",
-                      gender: formData.patient.gender || "MALE",
-                    },
-                    evaluation: {
-                      date: formData.evaluation.date || "",
-                      mainComplaint: formData.evaluation.mainComplaint || "",
-                      hmp: formData.evaluation.hmp || "",
-                      hma: formData.evaluation.hma || "",
-                      weight: parseFloat(formData.evaluation.weight || 0),
-                      height: parseFloat(formData.evaluation.height || 0),
-                      painLevel: parseInt(formData.evaluation.painLevel || 0),
-                      heartRate: formData.evaluation.heartRate || "",
-                      respiratoryRate:
-                        formData.evaluation.respiratoryRate || "",
-                    },
-                    medicalHistory: {
-                      associatedConditions:
-                        formData.medicalHistory.associatedConditions || "",
-                      allergy: !!formData.medicalHistory.allergy,
-                      enzymeDeficiencyG6PD:
-                        !!formData.medicalHistory.enzymeDeficiencyG6PD,
-                      sinusitis: !!formData.medicalHistory.sinusitis,
-                      rhinitis: !!formData.medicalHistory.rhinitis,
-                      diabetesMellitus:
-                        !!formData.medicalHistory.diabetesMellitus,
-                      highBloodPressure:
-                        !!formData.medicalHistory.highBloodPressure,
-                      cardiopathy: !!formData.medicalHistory.cardiopathy,
-                      anemia: !!formData.medicalHistory.anemia,
-                      hyperthyroidism:
-                        !!formData.medicalHistory.hyperthyroidism,
-                      recentCovidVaccine:
-                        !!formData.medicalHistory.recentCovidVaccine,
-                      recentHemorrhage:
-                        !!formData.medicalHistory.recentHemorrhage,
-                    },
-                    lifestyle: {
-                      physicalActivity:
-                        formData.lifestyle.physicalActivity || "",
-                      pastSurgeries: formData.lifestyle.pastSurgeries || "",
-                      fractures: formData.lifestyle.fractures || "",
-                      smoking: !!formData.lifestyle.smoking,
-                      alcohol: !!formData.lifestyle.alcohol,
-                      medications: formData.lifestyle.medications || "",
-                    },
-                  };
-
-                  const res = await api.post("/patient", payload, {
-                    headers: { Authorization: `Bearer ${token}` },
-                  });
-
-                  setPatientId(res.data.id);
-                  setStep(step + 1);
-                  return;
-                } catch (err) {
-                  console.error("Erro ao salvar paciente:", err);
-                  alert("Erro ao registrar paciente.");
-                  return;
-                }
-              }
-
-              // Se for qualquer outro passo
-              setStep(step + 1);
-            }}
-            style={styles.next}
-          >
+        {step < steps.length - 1 && (
+          <button onClick={handlePatientSubmit} style={styles.next}>
             Avançar →
-          </button>
-        ) : (
-          <button onClick={handleSubmit} style={styles.submit}>
-            Salvar Paciente
           </button>
         )}
       </div>
@@ -343,15 +163,6 @@ const styles = {
   next: {
     padding: "0.7rem 1.2rem",
     backgroundColor: "#00C9A7",
-    border: "none",
-    borderRadius: "8px",
-    color: "#fff",
-    fontWeight: "bold",
-    cursor: "pointer",
-  },
-  submit: {
-    padding: "0.7rem 1.2rem",
-    backgroundColor: "#037E63",
     border: "none",
     borderRadius: "8px",
     color: "#fff",

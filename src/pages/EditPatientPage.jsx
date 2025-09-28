@@ -2,9 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import PatientStep from "./registerSteps/PatientStep";
-import EvaluationStep from "./registerSteps/EvaluationStep";
-import MedicalHistoryStep from "./registerSteps/MedicalHistoryStep";
-import LifestyleStep from "./registerSteps/LifestyleStep";
 import ProgressBar from "./registerSteps/ProgressBar";
 import TemplateStep from "./registerSteps/TemplateStep";
 import api from "../services/api";
@@ -16,10 +13,7 @@ export default function EditPatientPage() {
   const [treatmentInstanceId, setTreatmentInstanceId] = useState(null);
   const [initialTemplateData, setInitialTemplateData] = useState({});
   const [formData, setFormData] = useState({
-    patient: {},
-    evaluation: {},
-    medicalHistory: {},
-    lifestyle: {},
+    patient: {}
   });
 
   useEffect(() => {

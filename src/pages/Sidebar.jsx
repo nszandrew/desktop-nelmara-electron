@@ -39,11 +39,6 @@ export default function Sidebar() {
           {expanded && <span style={styles.label}>Pacientes</span>}
         </div>
 
-        <div style={styles.menuItem} onClick={() => navigate('/treatments')}>
-          <FaFileMedical style={styles.icon} />
-          {expanded && <span style={styles.label}>Tratamentos</span>}
-        </div>
-
         <div style={styles.menuItem} onClick={() => navigate('/rma')}>
           <FaFilePdf style={styles.icon} />
           {expanded && <span style={styles.label}>RMA</span>}
