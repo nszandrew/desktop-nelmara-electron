@@ -10,6 +10,7 @@ import {
   FaEdit,
   FaArrowLeft,
 } from "react-icons/fa";
+import { TEMPLATES } from "../utils/Templates";
 
 export default function ViewPatientPage() {
   const { id } = useParams();
@@ -185,85 +186,10 @@ function renderContent(data, navigate, triggerPrint = () => window.print()) {
         </p>
       </section>
 
-      <section style={sectionStyle}>
-        <div style={titleStyle}>
-          <FaStethoscope /> Avaliação Clínica
-        </div>
-        <p>
-          <strong>Data:</strong> {formatDate(data.evaluation?.date)}
-        </p>
-        <p>
-          <strong>Queixa Principal:</strong> {data.evaluation?.mainComplaint}
-        </p>
-        <p>
-          <strong>HMP:</strong> {data.evaluation?.hmp}
-        </p>
-        <p>
-          <strong>HMA:</strong> {data.evaluation?.hma}
-        </p>
-        <p>
-          <strong>Peso:</strong> {data.evaluation?.weight} kg
-        </p>
-        <p>
-          <strong>Altura:</strong> {data.evaluation?.height} m
-        </p>
-        <p>
-          <strong>Dor (0 a 10):</strong> {data.evaluation?.painLevel}
-        </p>
-        <p>
-          <strong>Frequência Cardíaca:</strong> {data.evaluation?.heartRate}
-        </p>
-        <p>
-          <strong>Frequência Respiratória:</strong>{" "}
-          {data.evaluation?.respiratoryRate}
-        </p>
-      </section>
-
-      <section style={sectionStyle}>
-        <div style={titleStyle}>
-          <FaHeartbeat /> Histórico Médico
-        </div>
-        <p>
-          <strong>Condições Associadas:</strong>{" "}
-          {data.medicalHistory?.associatedConditions}
-        </p>
-        {Object.entries(data.medicalHistory || {})
-          .filter(([k]) => k !== "associatedConditions")
-          .map(([k, v]) => (
-            <p key={k}>
-              <strong>{formatKey(k)}:</strong> {v ? "Sim" : "Não"}
-            </p>
-          ))}
-      </section>
-
-      <section style={sectionStyle}>
-        <div style={titleStyle}>
-          <FaRunning /> Estilo de Vida
-        </div>
-        <p>
-          <strong>Atividade Física:</strong> {data.lifestyle?.physicalActivity}
-        </p>
-        <p>
-          <strong>Cirurgias:</strong> {data.lifestyle?.pastSurgeries}
-        </p>
-        <p>
-          <strong>Fraturas:</strong> {data.lifestyle?.fractures}
-        </p>
-        <p>
-          <strong>Fuma:</strong> {data.lifestyle?.smoking ? "Sim" : "Não"}
-        </p>
-        <p>
-          <strong>Consome álcool:</strong>{" "}
-          {data.lifestyle?.alcohol ? "Sim" : "Não"}
-        </p>
-        <p>
-          <strong>Medicamentos:</strong> {data.lifestyle?.medications}
-        </p>
-      </section>
-
       {data.treatmentInstance?.[0] && (
         <section style={sectionStyle}>
-          <div style={titleStyle}>📝 Tratamento</div>
+          <div style={titleStyle}>
+            <FaStethoscope /> Tratamento</div>
           <p>
             <strong>Nome do Tratamento:</strong>{" "}
             {data.treatmentInstance[0].name}
@@ -276,7 +202,7 @@ function renderContent(data, navigate, triggerPrint = () => window.print()) {
             {Object.entries(data.treatmentInstance[0].data || {}).map(
               ([key, value]) => (
                 <p key={key}>
-                  <strong>{key}:</strong> {value}
+                  <strong>{formatKey(key)}:</strong> {String(value)}
                 </p>
               )
             )}
@@ -291,21 +217,15 @@ function formatDate(iso) {
   return iso ? new Date(iso).toLocaleDateString("pt-BR") : "";
 }
 
+const labelMap = {};
+TEMPLATES.forEach(t => {
+  t.fields.forEach(f => {
+    labelMap[f.fieldName] = f.label || f.fieldName;
+  });
+});
+
 function formatKey(key) {
-  const map = {
-    allergy: "Alergia",
-    enzymeDeficiencyG6PD: "Def. G6PD",
-    sinusitis: "Sinusite",
-    rhinitis: "Rinite",
-    diabetesMellitus: "Diabetes",
-    highBloodPressure: "Hipertensão",
-    cardiopathy: "Cardiopatia",
-    anemia: "Anemia",
-    hyperthyroidism: "Hipertireoidismo",
-    recentCovidVaccine: "Vacina COVID recente",
-    recentHemorrhage: "Hemorragia recente",
-  };
-  return map[key] || key;
+  return labelMap[key] || key;
 }
 
 function btn(color) {

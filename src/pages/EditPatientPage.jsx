@@ -1,9 +1,9 @@
-// EditPatientPage.jsx
+// src/pages/EditPatientPage.jsx
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import PatientStep from "./registerSteps/PatientStep";
 import ProgressBar from "./registerSteps/ProgressBar";
-import TemplateStep from "./registerSteps/TemplateStep";
+import TemplateStep, { TEMPLATES } from "./registerSteps/TemplateStep";
 import api from "../services/api";
 
 export default function EditPatientPage() {
@@ -13,7 +13,7 @@ export default function EditPatientPage() {
   const [treatmentInstanceId, setTreatmentInstanceId] = useState(null);
   const [initialTemplateData, setInitialTemplateData] = useState({});
   const [formData, setFormData] = useState({
-    patient: {}
+    patient: {},
   });
 
   useEffect(() => {
@@ -39,24 +39,24 @@ export default function EditPatientPage() {
             indication: res.data.indication,
             gender: res.data.gender,
           },
-          evaluation: {
-            ...res.data.evaluation,
-            date: formatDate(res.data.evaluation?.date),
-          },
-          medicalHistory: res.data.medicalHistory || {},
-          lifestyle: res.data.lifestyle || {},
         };
 
         setFormData(formattedData);
+
+        // pega o primeiro tratamento
         const instance = res.data.treatmentInstance?.[0];
         if (instance) {
           setTreatmentInstanceId(instance.id);
+          const tpl = TEMPLATES.find(t => t.name === instance.name);
           setInitialTemplateData({
-            templateId: instance.id,
+            templateId: tpl ? tpl.id : null,
             answers: instance.data,
+            treatmentDate: instance.treatmentDate,
+            progress: instance.progress
           });
         }
       } catch (err) {
+        console.error(err);
         alert("Erro ao buscar dados do paciente.");
       }
     };
@@ -65,9 +65,6 @@ export default function EditPatientPage() {
 
   const steps = [
     { component: PatientStep, key: "patient" },
-    { component: EvaluationStep, key: "evaluation" },
-    { component: MedicalHistoryStep, key: "medicalHistory" },
-    { component: LifestyleStep, key: "lifestyle" },
     { component: TemplateStep, key: "template" },
   ];
 
@@ -85,26 +82,15 @@ export default function EditPatientPage() {
       const token = localStorage.getItem("token");
 
       const payload = {
-        patient: {
-          ...formData.patient,
-          cpf: formData.patient.cpf
-            .replace(/\D/g, "")
-            .replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4"),
-          dateOfBirth: new Date(formData.patient.dateOfBirth).toISOString(),
-        },
-        evaluation: {
-          ...formData.evaluation,
-          date: new Date(formData.evaluation.date).toISOString().split("T")[0],
-          weight: parseFloat(formData.evaluation.weight || 0),
-          height: parseFloat(formData.evaluation.height || 0),
-          painLevel: parseInt(formData.evaluation.painLevel || 0),
-        },
-        medicalHistory: {
-          ...formData.medicalHistory,
-        },
-        lifestyle: {
-          ...formData.lifestyle,
-        },
+        fullName: formData.patient.fullName,
+        cpf: formData.patient.cpf,
+        email: formData.patient.email,
+        phone: formData.patient.phone,
+        dateOfBirth: new Date(formData.patient.dateOfBirth).toISOString(),
+        address: formData.patient.address,
+        profession: formData.patient.profession,
+        indication: formData.patient.indication,
+        gender: formData.patient.gender,
       };
 
       await api.put(`/patient/${id}`, payload, {
@@ -119,54 +105,50 @@ export default function EditPatientPage() {
     }
   };
 
-  const handleTemplateUpdate = async (
-    templateId,
-    answers,
-    treatmentInstanceId
-  ) => {
-    const token = localStorage.getItem("token");
-    await api.put(
-      `/treatment-instance/${treatmentInstanceId}`,
-      {
-        treatmentDate: new Date().toISOString(),
-        progress: "",
-        data: answers,
-      },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    alert("Template atualizado com sucesso!");
-    navigate("/");
-  };
+  const handleTemplateUpdate = async (templateId, answers, treatmentId) => {
+    try {
+      const token = localStorage.getItem("token");
 
-  const validateStep = (data, key) => {
-    switch (key) {
-      case "patient":
-        return (
-          data.fullName &&
-          data.email &&
-          data.phone &&
-          data.dateOfBirth &&
-          data.gender &&
-          data.cpf
-        );
-      case "evaluation":
-        return (
-          data.date &&
-          data.mainComplaint &&
-          data.hmp &&
-          data.hma &&
-          data.weight &&
-          data.height &&
-          data.painLevel
-        );
-      case "medicalHistory":
-        return typeof data.allergy === "boolean";
-      case "lifestyle":
-        return (
-          data.physicalActivity !== undefined && data.medications !== undefined
-        );
-      default:
-        return true;
+      // converte tipos igual no TemplateStep
+      const template = TEMPLATES.find((t) => t.id === Number(templateId));
+      const dataTyped = {};
+      template.fields.forEach((f) => {
+        const val = answers[f.fieldName];
+        if (val === "" || val === undefined || val === null) {
+          dataTyped[f.fieldName] = null;
+        } else {
+          switch (f.fieldType) {
+            case "NUMBER":
+              dataTyped[f.fieldName] = Number(val);
+              break;
+            case "BOOLEAN":
+              dataTyped[f.fieldName] = val === true || val === "true";
+              break;
+            case "DATE":
+              dataTyped[f.fieldName] = new Date(val).toISOString().split("T")[0];
+              break;
+            default:
+              dataTyped[f.fieldName] = val;
+          }
+        }
+      });
+
+      await api.put(
+        `/treatment-instance/${treatmentId}`,
+        {
+          patientId: id,
+          templateId: Number(templateId),
+          treatmentDate: new Date().toISOString(),
+          progress: null,
+          data: dataTyped,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert("Template atualizado com sucesso!");
+      navigate("/");
+    } catch (err) {
+      console.error("Erro ao atualizar tratamento:", err);
+      alert("Erro ao atualizar tratamento.");
     }
   };
 
@@ -202,6 +184,7 @@ export default function EditPatientPage() {
         {steps[step].key === "template" ? (
           <TemplateStep
             treatmentInstanceId={treatmentInstanceId}
+            patientId={id} // passa id do paciente
             initialValues={initialTemplateData}
             onSubmit={handleTemplateUpdate}
           />
@@ -234,26 +217,38 @@ export default function EditPatientPage() {
             ← Voltar
           </button>
         )}
-        {step < steps.length - 1 ? (
+
+        {/* só renderiza Atualizar Paciente se estiver no step 0 */}
+        {step === 0 && (
           <button
-            onClick={() => {
-              setStep(step + 1);
+            onClick={async () => {
+              // já atualiza paciente antes de avançar
+              try {
+                const token = localStorage.getItem("token");
+
+                const payload = {
+                  fullName: formData.patient.fullName,
+                  cpf: formData.patient.cpf,
+                  email: formData.patient.email,
+                  phone: formData.patient.phone,
+                  dateOfBirth: new Date(formData.patient.dateOfBirth).toISOString(),
+                  address: formData.patient.address,
+                  profession: formData.patient.profession,
+                  indication: formData.patient.indication,
+                  gender: formData.patient.gender,
+                };
+
+                await api.put(`/patient/${id}`, payload, {
+                  headers: { Authorization: `Bearer ${token}` },
+                });
+
+                // se deu certo avança pro próximo step
+                setStep(step + 1);
+              } catch (err) {
+                console.error("Erro ao atualizar paciente:", err);
+                alert("Erro ao atualizar paciente.");
+              }
             }}
-            style={{
-              padding: "0.7rem 1.2rem",
-              backgroundColor: "#00C9A7",
-              border: "none",
-              borderRadius: "8px",
-              color: "#fff",
-              fontWeight: "bold",
-              cursor: "pointer",
-            }}
-          >
-            Avançar →
-          </button>
-        ) : (
-          <button
-            onClick={handleUpdate}
             style={{
               padding: "0.7rem 1.2rem",
               backgroundColor: "#037E63",
@@ -264,10 +259,11 @@ export default function EditPatientPage() {
               cursor: "pointer",
             }}
           >
-            Atualizar Paciente
+            Atualizar Paciente e Avançar →
           </button>
         )}
       </div>
+
     </div>
   );
 }

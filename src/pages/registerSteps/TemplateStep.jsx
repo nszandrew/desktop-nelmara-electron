@@ -1,306 +1,60 @@
 import React, { useEffect, useState } from "react";
 import api from "../../services/api";
+import { TEMPLATES } from "../../utils/Templates";
 
-// Array fixo com os 6 templates e seus campos (apenas exemplo resumido)
-export const TEMPLATES = [
-  {
-    id: 1,
-    name: "Neurológica",
-    fields: [
-      { fieldName: "Queixa Principal", fieldType: "STRING", required: true },
-      { fieldName: "painLevel", fieldType: "NUMBER", required: false },
-      { fieldName: "date", fieldType: "DATE", required: true },
-      { fieldName: "hmp", fieldType: "STRING", required: false },
-      { fieldName: "hma", fieldType: "STRING", required: false },
-      { fieldName: "associatedConditions", fieldType: "STRING", required: false },
-      { fieldName: "allergy", fieldType: "BOOLEAN", required: false },
-      { fieldName: "enzymeDeficiencyG6PD", fieldType: "BOOLEAN", required: false },
-      { fieldName: "sinusitis", fieldType: "BOOLEAN", required: false },
-      { fieldName: "rhinitis", fieldType: "BOOLEAN", required: false },
-      { fieldName: "diabetesMellitus", fieldType: "BOOLEAN", required: false },
-      { fieldName: "highBloodPressure", fieldType: "BOOLEAN", required: false },
-      { fieldName: "cardiopathy", fieldType: "BOOLEAN", required: false },
-      { fieldName: "anemia", fieldType: "BOOLEAN", required: false },
-      { fieldName: "hyperthyroidism", fieldType: "BOOLEAN", required: false },
-      { fieldName: "epilepsyOrSeizures", fieldType: "BOOLEAN", required: false },
-      { fieldName: "mentalDisorder", fieldType: "BOOLEAN", required: false },
-      { fieldName: "recentCovidVaccine", fieldType: "BOOLEAN", required: false },
-      { fieldName: "recentHemorrhage", fieldType: "BOOLEAN", required: false },
-      { fieldName: "physicalActivity", fieldType: "STRING", required: false },
-      { fieldName: "pastSurgeries", fieldType: "STRING", required: false },
-      { fieldName: "fractures", fieldType: "STRING", required: false },
-      { fieldName: "smoking", fieldType: "BOOLEAN", required: false },
-      { fieldName: "alcohol", fieldType: "BOOLEAN", required: false },
-      { fieldName: "medications", fieldType: "STRING", required: false },
-      { fieldName: "Inspeção - Pele", fieldType: "STRING", required: true },
-      { fieldName: "Inspeção - Aspecto", fieldType: "STRING", required: true },
-      { fieldName: "Inspeção - Deformidades", fieldType: "STRING", required: true },
-      { fieldName: "Marcha", fieldType: "STRING", required: true },
-      { fieldName: "Trocas Posturais", fieldType: "STRING", required: true },
-      { fieldName: "AVDs (Atividades da Vida Diária)", fieldType: "STRING", required: false },
-      { fieldName: "Observações", fieldType: "STRING", required: false },
-      { fieldName: "weight", fieldType: "NUMBER", required: false },
-      { fieldName: "height", fieldType: "NUMBER", required: false },
-      { fieldName: "heartRate", fieldType: "STRING", required: false },
-      { fieldName: "respiratoryRate", fieldType: "STRING", required: false }
-    ]
-  },
-  {
-    id: 2,
-    name: "Postural",
-    fields: [
-      { fieldName: "Queixa Principal", fieldType: "STRING", required: true },
-      { fieldName: "painLevel", fieldType: "NUMBER", required: false },
-      { fieldName: "date", fieldType: "DATE", required: true },
-      { fieldName: "hmp", fieldType: "STRING", required: false },
-      { fieldName: "hma", fieldType: "STRING", required: false },
-      { fieldName: "associatedConditions", fieldType: "STRING", required: false },
-      { fieldName: "allergy", fieldType: "BOOLEAN", required: false },
-      { fieldName: "enzymeDeficiencyG6PD", fieldType: "BOOLEAN", required: false },
-      { fieldName: "sinusitis", fieldType: "BOOLEAN", required: false },
-      { fieldName: "rhinitis", fieldType: "BOOLEAN", required: false },
-      { fieldName: "diabetesMellitus", fieldType: "BOOLEAN", required: false },
-      { fieldName: "highBloodPressure", fieldType: "BOOLEAN", required: false },
-      { fieldName: "cardiopathy", fieldType: "BOOLEAN", required: false },
-      { fieldName: "anemia", fieldType: "BOOLEAN", required: false },
-      { fieldName: "hyperthyroidism", fieldType: "BOOLEAN", required: false },
-      { fieldName: "epilepsyOrSeizures", fieldType: "BOOLEAN", required: false },
-      { fieldName: "mentalDisorder", fieldType: "BOOLEAN", required: false },
-      { fieldName: "recentCovidVaccine", fieldType: "BOOLEAN", required: false },
-      { fieldName: "recentHemorrhage", fieldType: "BOOLEAN", required: false },
-      { fieldName: "physicalActivity", fieldType: "STRING", required: false },
-      { fieldName: "pastSurgeries", fieldType: "STRING", required: false },
-      { fieldName: "fractures", fieldType: "STRING", required: false },
-      { fieldName: "smoking", fieldType: "BOOLEAN", required: false },
-      { fieldName: "alcohol", fieldType: "BOOLEAN", required: false },
-      { fieldName: "medications", fieldType: "STRING", required: false },
-      { fieldName: "Marcha", fieldType: "STRING", required: false },
-      { fieldName: "Vista Anterior", fieldType: "STRING", required: false },
-      { fieldName: "Vista Lateral Direita", fieldType: "STRING", required: false },
-      { fieldName: "Vista Lateral Esquerda", fieldType: "STRING", required: false },
-      { fieldName: "Vista Posterior", fieldType: "STRING", required: false },
-      { fieldName: "Flexão Anterior Lateral", fieldType: "STRING", required: false },
-      { fieldName: "Flexão Anterior A.P", fieldType: "STRING", required: false },
-      { fieldName: "Postura de Trabalho - Sentada (Horas)", fieldType: "STRING", required: false },
-      { fieldName: "Postura de Trabalho - Em Pé (Horas)", fieldType: "STRING", required: false },
-      { fieldName: "weight", fieldType: "NUMBER", required: false },
-      { fieldName: "height", fieldType: "NUMBER", required: false },
-      { fieldName: "heartRate", fieldType: "STRING", required: false },
-      { fieldName: "respiratoryRate", fieldType: "STRING", required: false }
-    ]
-  },
-  {
-    id: 3,
-    name: "Ortopédica",
-    fields: [
-      { fieldName: "Queixa Principal", fieldType: "STRING", required: true },
-      { fieldName: "painLevel", fieldType: "NUMBER", required: false },
-      { fieldName: "date", fieldType: "DATE", required: true },
-      { fieldName: "hmp", fieldType: "STRING", required: false },
-      { fieldName: "hma", fieldType: "STRING", required: false },
-      { fieldName: "associatedConditions", fieldType: "STRING", required: false },
-      { fieldName: "allergy", fieldType: "BOOLEAN", required: false },
-      { fieldName: "enzymeDeficiencyG6PD", fieldType: "BOOLEAN", required: false },
-      { fieldName: "sinusitis", fieldType: "BOOLEAN", required: false },
-      { fieldName: "rhinitis", fieldType: "BOOLEAN", required: false },
-      { fieldName: "diabetesMellitus", fieldType: "BOOLEAN", required: false },
-      { fieldName: "highBloodPressure", fieldType: "BOOLEAN", required: false },
-      { fieldName: "cardiopathy", fieldType: "BOOLEAN", required: false },
-      { fieldName: "anemia", fieldType: "BOOLEAN", required: false },
-      { fieldName: "hyperthyroidism", fieldType: "BOOLEAN", required: false },
-      { fieldName: "epilepsyOrSeizures", fieldType: "BOOLEAN", required: false },
-      { fieldName: "mentalDisorder", fieldType: "BOOLEAN", required: false },
-      { fieldName: "recentCovidVaccine", fieldType: "BOOLEAN", required: false },
-      { fieldName: "recentHemorrhage", fieldType: "BOOLEAN", required: false },
-      { fieldName: "physicalActivity", fieldType: "STRING", required: false },
-      { fieldName: "pastSurgeries", fieldType: "STRING", required: false },
-      { fieldName: "fractures", fieldType: "STRING", required: false },
-      { fieldName: "smoking", fieldType: "BOOLEAN", required: false },
-      { fieldName: "alcohol", fieldType: "BOOLEAN", required: false },
-      { fieldName: "medications", fieldType: "STRING", required: false },
-      { fieldName: "Circunferência - Direita", fieldType: "NUMBER", required: true },
-      { fieldName: "Circunferência - Esquerda", fieldType: "NUMBER", required: true },
-      { fieldName: "Força Muscular (F.M.) - Direita", fieldType: "NUMBER", required: true },
-      { fieldName: "Força Muscular (F.M.) - Esquerda", fieldType: "NUMBER", required: true },
-      { fieldName: "ADM - Direita", fieldType: "NUMBER", required: true },
-      { fieldName: "ADM - Esquerda", fieldType: "NUMBER", required: true },
-      { fieldName: "weight", fieldType: "NUMBER", required: false },
-      { fieldName: "height", fieldType: "NUMBER", required: false },
-      { fieldName: "heartRate", fieldType: "STRING", required: false },
-      { fieldName: "respiratoryRate", fieldType: "STRING", required: false }
-    ]
-  },
-  {
-    id: 4,
-    name: "Facial",
-    fields: [
-      { fieldName: "Queixa Principal", fieldType: "STRING", required: true },
-      { fieldName: "painLevel", fieldType: "NUMBER", required: false },
-      { fieldName: "date", fieldType: "DATE", required: true },
-      { fieldName: "hmp", fieldType: "STRING", required: false },
-      { fieldName: "hma", fieldType: "STRING", required: false },
-      { fieldName: "associatedConditions", fieldType: "STRING", required: false },
-      { fieldName: "allergy", fieldType: "BOOLEAN", required: false },
-      { fieldName: "enzymeDeficiencyG6PD", fieldType: "BOOLEAN", required: false },
-      { fieldName: "sinusitis", fieldType: "BOOLEAN", required: false },
-      { fieldName: "rhinitis", fieldType: "BOOLEAN", required: false },
-      { fieldName: "diabetesMellitus", fieldType: "BOOLEAN", required: false },
-      { fieldName: "highBloodPressure", fieldType: "BOOLEAN", required: false },
-      { fieldName: "cardiopathy", fieldType: "BOOLEAN", required: false },
-      { fieldName: "anemia", fieldType: "BOOLEAN", required: false },
-      { fieldName: "hyperthyroidism", fieldType: "BOOLEAN", required: false },
-      { fieldName: "epilepsyOrSeizures", fieldType: "BOOLEAN", required: false },
-      { fieldName: "mentalDisorder", fieldType: "BOOLEAN", required: false },
-      { fieldName: "recentCovidVaccine", fieldType: "BOOLEAN", required: false },
-      { fieldName: "recentHemorrhage", fieldType: "BOOLEAN", required: false },
-      { fieldName: "physicalActivity", fieldType: "STRING", required: false },
-      { fieldName: "pastSurgeries", fieldType: "STRING", required: false },
-      { fieldName: "fractures", fieldType: "STRING", required: false },
-      { fieldName: "smoking", fieldType: "BOOLEAN", required: false },
-      { fieldName: "alcohol", fieldType: "BOOLEAN", required: false },
-      { fieldName: "medications", fieldType: "STRING", required: false },
-      { fieldName: "Tem algum problema de saúde? Qual?", fieldType: "STRING", required: false },
-      { fieldName: "Ingestão de água. Quantos Litros no dia?", fieldType: "STRING", required: false },
-      { fieldName: "Exposição ao sol e cuidados", fieldType: "STRING", required: false },
-      { fieldName: "Uso de filtro solar (frequência e tipo)", fieldType: "STRING", required: false },
-      { fieldName: "Lentes de contato?", fieldType: "STRING", required: false },
-      { fieldName: "Cosméticos / dermocosméticos utilizados", fieldType: "STRING", required: false },
-      { fieldName: "Tratamentos estéticos anteriores", fieldType: "STRING", required: false },
-      { fieldName: "FEG (Gordurosa, Fibrosa, Flácida) - Em qual região?", fieldType: "STRING", required: false },
-      { fieldName: "Flacidez (Tissular e Muscular) - Em qual região?", fieldType: "STRING", required: false },
-      { fieldName: "Condições da pele (Cravos, Acne, Cicatriz, Manchas)", fieldType: "STRING", required: false },
-      { fieldName: "O que você espera do tratamento?", fieldType: "STRING", required: false },
-      { fieldName: "weight", fieldType: "NUMBER", required: false },
-      { fieldName: "height", fieldType: "NUMBER", required: false },
-      { fieldName: "heartRate", fieldType: "STRING", required: false },
-      { fieldName: "respiratoryRate", fieldType: "STRING", required: false }
-    ]
-  },
-  {
-    id: 5,
-    name: "Corporal",
-    fields: [
-      { fieldName: "Queixa Principal", fieldType: "STRING", required: true },
-      { fieldName: "painLevel", fieldType: "NUMBER", required: false },
-      { fieldName: "date", fieldType: "DATE", required: true },
-      { fieldName: "hmp", fieldType: "STRING", required: false },
-      { fieldName: "hma", fieldType: "STRING", required: false },
-      { fieldName: "associatedConditions", fieldType: "STRING", required: false },
-      { fieldName: "allergy", fieldType: "BOOLEAN", required: false },
-      { fieldName: "enzymeDeficiencyG6PD", fieldType: "BOOLEAN", required: false },
-      { fieldName: "sinusitis", fieldType: "BOOLEAN", required: false },
-      { fieldName: "rhinitis", fieldType: "BOOLEAN", required: false },
-      { fieldName: "diabetesMellitus", fieldType: "BOOLEAN", required: false },
-      { fieldName: "highBloodPressure", fieldType: "BOOLEAN", required: false },
-      { fieldName: "cardiopathy", fieldType: "BOOLEAN", required: false },
-      { fieldName: "anemia", fieldType: "BOOLEAN", required: false },
-      { fieldName: "hyperthyroidism", fieldType: "BOOLEAN", required: false },
-      { fieldName: "epilepsyOrSeizures", fieldType: "BOOLEAN", required: false },
-      { fieldName: "mentalDisorder", fieldType: "BOOLEAN", required: false },
-      { fieldName: "recentCovidVaccine", fieldType: "BOOLEAN", required: false },
-      { fieldName: "recentHemorrhage", fieldType: "BOOLEAN", required: false },
-      { fieldName: "physicalActivity", fieldType: "STRING", required: false },
-      { fieldName: "pastSurgeries", fieldType: "STRING", required: false },
-      { fieldName: "fractures", fieldType: "STRING", required: false },
-      { fieldName: "smoking", fieldType: "BOOLEAN", required: false },
-      { fieldName: "alcohol", fieldType: "BOOLEAN", required: false },
-      { fieldName: "medications", fieldType: "STRING", required: false },
-      { fieldName: "Retenção de líquido", fieldType: "BOOLEAN", required: false },
-      { fieldName: "Gordura Localizada (região)", fieldType: "STRING", required: false },
-      { fieldName: "FEG (Edematosa/Gordurosa, Fibrótica, Flácida)", fieldType: "STRING", required: false },
-      { fieldName: "Flacidez (Tissular e Muscular)", fieldType: "STRING", required: false },
-      { fieldName: "Estria (região)", fieldType: "STRING", required: false },
-      { fieldName: "Altura", fieldType: "STRING", required: false },
-      { fieldName: "Peso", fieldType: "STRING", required: false },
-      { fieldName: "Frequência Respiratória (FR)", fieldType: "STRING", required: false },
-      { fieldName: "Frequência Cardíaca (FC)", fieldType: "STRING", required: false },
-      { fieldName: "Abdomen", fieldType: "STRING", required: false },
-      { fieldName: "Braço Direito", fieldType: "STRING", required: false },
-      { fieldName: "Braço Esquerdo", fieldType: "STRING", required: false },
-      { fieldName: "Tórax", fieldType: "STRING", required: false },
-      { fieldName: "Cintura", fieldType: "STRING", required: false },
-      { fieldName: "Flanco", fieldType: "STRING", required: false },
-      { fieldName: "Quadril / Culote", fieldType: "STRING", required: false },
-      { fieldName: "Coxa Sup. Direita", fieldType: "STRING", required: false },
-      { fieldName: "Coxa Sup. Esquerda", fieldType: "STRING", required: false },
-      { fieldName: "Coxa Inf. Direita", fieldType: "STRING", required: false },
-      { fieldName: "Coxa Inf. Esquerda", fieldType: "STRING", required: false },
-      { fieldName: "Peso", fieldType: "STRING", required: false },
-      { fieldName: "Observações", fieldType: "STRING", required: false }
-    ]
-  },
-  {
-    id: 6,
-    name: "Ozonioterapia",
-    fields: [
-      { fieldName: "Queixa Principal", fieldType: "STRING", required: true },
-      { fieldName: "painLevel", fieldType: "NUMBER", required: false },
-      { fieldName: "date", fieldType: "DATE", required: true },
-      { fieldName: "hmp", fieldType: "STRING", required: false },
-      { fieldName: "hma", fieldType: "STRING", required: false },
-      { fieldName: "associatedConditions", fieldType: "STRING", required: false },
-      { fieldName: "allergy", fieldType: "BOOLEAN", required: false },
-      { fieldName: "enzymeDeficiencyG6PD", fieldType: "BOOLEAN", required: false },
-      { fieldName: "sinusitis", fieldType: "BOOLEAN", required: false },
-      { fieldName: "rhinitis", fieldType: "BOOLEAN", required: false },
-      { fieldName: "diabetesMellitus", fieldType: "BOOLEAN", required: false },
-      { fieldName: "highBloodPressure", fieldType: "BOOLEAN", required: false },
-      { fieldName: "cardiopathy", fieldType: "BOOLEAN", required: false },
-      { fieldName: "anemia", fieldType: "BOOLEAN", required: false },
-      { fieldName: "hyperthyroidism", fieldType: "BOOLEAN", required: false },
-      { fieldName: "epilepsyOrSeizures", fieldType: "BOOLEAN", required: false },
-      { fieldName: "mentalDisorder", fieldType: "BOOLEAN", required: false },
-      { fieldName: "recentCovidVaccine", fieldType: "BOOLEAN", required: false },
-      { fieldName: "recentHemorrhage", fieldType: "BOOLEAN", required: false },
-      { fieldName: "physicalActivity", fieldType: "STRING", required: false },
-      { fieldName: "pastSurgeries", fieldType: "STRING", required: false },
-      { fieldName: "fractures", fieldType: "STRING", required: false },
-      { fieldName: "smoking", fieldType: "BOOLEAN", required: false },
-      { fieldName: "alcohol", fieldType: "BOOLEAN", required: false },
-      { fieldName: "medications", fieldType: "STRING", required: false },
-      { fieldName: "Tipo de Alimentação", fieldType: "STRING", required: false },
-      { fieldName: "Ingestão de Água (Copos/dia)", fieldType: "STRING", required: false },
-      { fieldName: "Funcionamento Intestinal", fieldType: "STRING", required: false },
-      { fieldName: "Sono/Repouso", fieldType: "STRING", required: false },
-      { fieldName: "Sexualidade/Reprodução", fieldType: "STRING", required: false },
-      { fieldName: "DUM", fieldType: "DATE", required: false },
-      { fieldName: "Postura de Trabalho - Sentada (Horas)", fieldType: "STRING", required: false },
-      { fieldName: "Postura de Trabalho - Em Pé (Horas)", fieldType: "STRING", required: false },
-      { fieldName: "Tratamento com ozônio anterior - Qual via/conc.", fieldType: "STRING", required: false },
-      { fieldName: "Tratamento estético anterior - Qual?", fieldType: "STRING", required: false },
-      { fieldName: "Planejamento Semanal", fieldType: "STRING", required: false },
-      { fieldName: "Observações", fieldType: "STRING", required: false },
-      { fieldName: "weight", fieldType: "NUMBER", required: false },
-      { fieldName: "height", fieldType: "NUMBER", required: false },
-      { fieldName: "heartRate", fieldType: "STRING", required: false },
-      { fieldName: "respiratoryRate", fieldType: "STRING", required: false }
-    ]
-  }
-];
-
-export default function TemplateStep({ onSubmit, treatmentInstanceId, patientId,initialValues = {} }) {
+export default function TemplateStep({ onSubmit, treatmentInstanceId, patientId, initialValues = {} }) {
   const [selected, setSelected] = useState(initialValues.templateId || null);
   const [fields, setFields] = useState([]);
   const [answers, setAnswers] = useState(initialValues.answers || {});
 
   useEffect(() => {
+    if (initialValues.templateId) {
+      setSelected(initialValues.templateId);
+      setAnswers(initialValues.answers || {});
+    }
+  }, [initialValues]);
+
+  // carrega os fields do template assim que selected mudar
+  useEffect(() => {
     if (selected) {
       const template = TEMPLATES.find(t => t.id === Number(selected));
       if (template) {
         setFields(template.fields);
-        setAnswers(initialValues.answers || {});
       }
     }
   }, [selected]);
 
   const handleAnswer = (fieldName, value) => {
-    setAnswers((prev) => ({ ...prev, [fieldName]: value.toString() }));
+    setAnswers(prev => ({ ...prev, [fieldName]: value }));
   };
 
   const handleContinue = async () => {
-    if (!selected || fields.some((f) => f.required && !answers[f.fieldName])) {
+    if (!selected || fields.some(f => f.required && !answers[f.fieldName])) {
       return alert("Selecione o Tratamento e preencha os campos obrigatórios");
     }
+
+    // converte tipos corretamente antes de enviar
+    const dataTyped = {};
+    fields.forEach(f => {
+      const val = answers[f.fieldName];
+      if (val === "" || val === undefined || val === null) {
+        dataTyped[f.fieldName] = null;
+      } else {
+        switch (f.fieldType) {
+          case "NUMBER":
+            dataTyped[f.fieldName] = Number(val);
+            break;
+          case "BOOLEAN":
+            dataTyped[f.fieldName] = val === true || val === "true";
+            break;
+          case "DATE":
+            dataTyped[f.fieldName] = val ? val.split('T')[0] : null;
+            break;
+          default:
+            dataTyped[f.fieldName] = val;
+        }
+      }
+    });
 
     const token = localStorage.getItem("token");
     const payload = {
@@ -308,7 +62,7 @@ export default function TemplateStep({ onSubmit, treatmentInstanceId, patientId,
       templateId: Number(selected),
       treatmentDate: initialValues.treatmentDate || new Date().toISOString(),
       progress: initialValues.progress || [],
-      data: answers
+      data: dataTyped
     };
 
     try {
@@ -413,7 +167,7 @@ export default function TemplateStep({ onSubmit, treatmentInstanceId, patientId,
             return (
               <div key={f.fieldName + idx} style={fieldStyle}>
                 <label style={labelStyle}>
-                  {f.fieldName}
+                  {f.label || f.fieldName}
                   {f.required && <span style={{ color: '#e74c3c', marginLeft: '4px' }}>*</span>}
                 </label>
                 {renderInput(f)}
