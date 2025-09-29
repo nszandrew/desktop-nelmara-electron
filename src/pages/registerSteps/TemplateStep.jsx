@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import api from "../../services/api";
 import { TEMPLATES } from "../../utils/Templates";
+import ProgressStep from "./ProgressStep";
 
 export default function TemplateStep({ onSubmit, treatmentInstanceId, patientId, initialValues = {} }) {
   const [selected, setSelected] = useState(initialValues.templateId || null);
   const [fields, setFields] = useState([]);
   const [answers, setAnswers] = useState(initialValues.answers || {});
+  const [progress, setProgress] = useState(initialValues.progress || []);
 
   useEffect(() => {
     if (initialValues.templateId) {
@@ -61,7 +63,7 @@ export default function TemplateStep({ onSubmit, treatmentInstanceId, patientId,
       patientId: patientId,
       templateId: Number(selected),
       treatmentDate: initialValues.treatmentDate || new Date().toISOString(),
-      progress: initialValues.progress || [],
+      progress: progress,
       data: dataTyped
     };
 

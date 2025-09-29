@@ -3,6 +3,7 @@ export const TEMPLATES = [
     id: 1,
     name: "Neurológica",
     fields: [
+      { fieldName: "Queixa Principal", label: "Queixa Principal", fieldType: "STRING", required: true },
       { fieldName: "painLevel", label: "Nível de Dor", fieldType: "NUMBER", required: false },
       { fieldName: "date", label: "Data", fieldType: "DATE", required: true },
       { fieldName: "hmp", label: "H.M.P", fieldType: "STRING", required: false },
@@ -44,6 +45,7 @@ export const TEMPLATES = [
     id: 2,
     name: "Postural",
     fields: [
+      { fieldName: "Queixa Principal", label: "Queixa Principal", fieldType: "STRING", required: true },
       { fieldName: "painLevel", label: "Nível de Dor", fieldType: "NUMBER", required: false },
       { fieldName: "date", label: "Data", fieldType: "DATE", required: true },
       { fieldName: "hmp", label: "H.M.P", fieldType: "STRING", required: false },

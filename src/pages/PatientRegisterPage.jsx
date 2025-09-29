@@ -1,19 +1,23 @@
-// src/pages/PatientRegisterPage.jsx
 import React, { useState } from "react";
 import PatientStep from "./registerSteps/PatientStep";
 import TemplateStep from "./registerSteps/TemplateStep";
 import ProgressBar from "./registerSteps/ProgressBar";
 import api from "../services/api";
 import { useNavigate } from "react-router-dom";
+import ProgressStep from "./registerSteps/ProgressStep";
 
 export default function PatientRegisterPage() {
   const navigate = useNavigate();
   const [patientId, setPatientId] = useState(null);
   const [step, setStep] = useState(0);
-  const [formData, setFormData] = useState({ patient: {} });
+  const [formData, setFormData] = useState({
+    patient: {},
+    progress: { items: [] },
+  });
 
   const steps = [
     { component: PatientStep, key: "patient" },
+    { component: ProgressStep, key: "progress" },
     { component: TemplateStep, key: "template" },
   ];
 
@@ -30,7 +34,6 @@ export default function PatientRegisterPage() {
     try {
       const token = localStorage.getItem("token");
 
-      // função para garantir uma ISO válida
       const getDateIso = (val) => {
         if (!val) return new Date().toISOString();
         const d = new Date(val);
@@ -63,21 +66,27 @@ export default function PatientRegisterPage() {
     }
   };
 
-
+  const handleProgressSubmit = () => {
+    // aqui você pode validar se o progresso está ok antes de avançar
+    setStep(step + 1);
+  };
 
   const handleTemplateSubmit = async (templateId, answers, treatmentInstanceId) => {
     try {
       const token = localStorage.getItem("token");
+      const payload = {
+        patientId,
+        templateId: Number(templateId),
+        treatmentDate: new Date().toISOString(),
+        progress: formData.progress.items || [],
+        data: answers,
+      };
+
       if (treatmentInstanceId) {
-        await api.put(`/treatment-instance/${treatmentInstanceId}`, {
-          treatmentDate: new Date().toISOString(),
-          progress: initialValues.progress || [],
-          data: answers,
-        }, { headers: { Authorization: `Bearer ${token}` } });
         alert("Tratamento atualizado com sucesso!");
       } else {
         alert("Paciente e Tratamento vinculados com sucesso!");
-        navigate("/");  
+        navigate("/");
       }
     } catch (err) {
       console.error("Erro ao salvar tratamento:", err);
@@ -101,29 +110,46 @@ export default function PatientRegisterPage() {
       >
         ← Voltar para o Início
       </button>
+
       <ProgressBar currentStep={step} totalSteps={steps.length} />
+
       <div style={styles.stepWrapper}>
-        {step === steps.length - 1 ? (
-          patientId ? (
-            <TemplateStep onSubmit={handleTemplateSubmit} patientId={patientId} />
-          ) : (
-            <div>Salvando paciente...</div>
-          )
-        ) : (
-          <CurrentStep
-            data={formData[steps[step].key]}
-            onChange={(data) => handleChange(steps[step].key, data)}
+        {step === 0 && (
+          <PatientStep
+            data={formData.patient}
+            onChange={(data) => handleChange("patient", data)}
+          />
+        )}
+
+        {step === 1 && (
+          <ProgressStep
+            data={formData.progress}
+            onChange={(data) => handleChange("progress", data)}
+          />
+        )}
+
+        {step === 2 && patientId && (
+          <TemplateStep
+            onSubmit={handleTemplateSubmit}
+            patientId={patientId}
+            initialValues={{ progress: formData.progress.items || [] }}
           />
         )}
       </div>
+
       <div style={styles.buttons}>
         {step > 0 && (
           <button onClick={() => setStep(step - 1)} style={styles.back}>
             ← Voltar
           </button>
         )}
-        {step < steps.length - 1 && (
+        {step === 0 && (
           <button onClick={handlePatientSubmit} style={styles.next}>
+            Avançar →
+          </button>
+        )}
+        {step === 1 && (
+          <button onClick={handleProgressSubmit} style={styles.next}>
             Avançar →
           </button>
         )}

@@ -3,8 +3,10 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import PatientStep from "./registerSteps/PatientStep";
 import ProgressBar from "./registerSteps/ProgressBar";
-import TemplateStep, { TEMPLATES } from "./registerSteps/TemplateStep";
+import ProgressStep from "./registerSteps/ProgressStep";
+import TemplateStep from "./registerSteps/TemplateStep";
 import api from "../services/api";
+import { TEMPLATES } from "../utils/Templates";
 
 export default function EditPatientPage() {
   const { id } = useParams();
@@ -14,57 +16,63 @@ export default function EditPatientPage() {
   const [initialTemplateData, setInitialTemplateData] = useState({});
   const [formData, setFormData] = useState({
     patient: {},
+    progress: {} // adiciona progress
   });
 
-  useEffect(() => {
-    const fetchPatient = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const res = await api.get(`/patient/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
+useEffect(() => {
+  const fetchPatient = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await api.get(`/patient/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const formatDate = (iso) =>
+        iso ? new Date(iso).toISOString().split("T")[0] : "";
+
+      // pega o primeiro tratamento antes
+      const instance = res.data.treatmentInstance?.[0];
+
+      // agora monta o formData já com o progress do backend
+      const formattedData = {
+        patient: {
+          fullName: res.data.fullName,
+          cpf: res.data.cpf,
+          email: res.data.email,
+          phone: res.data.phone,
+          dateOfBirth: formatDate(res.data.dateOfBirth),
+          address: res.data.address,
+          profession: res.data.profession,
+          indication: res.data.indication,
+          gender: res.data.gender,
+        },
+        progress: { items: instance?.progress || [] },
+      };
+
+      setFormData(formattedData);
+
+      if (instance) {
+        setTreatmentInstanceId(instance.id);
+        const tpl = TEMPLATES.find(t => t.name === instance.name);
+        setInitialTemplateData({
+          templateId: tpl ? tpl.id : null,
+          answers: instance.data,
+          treatmentDate: instance.treatmentDate,
+          progress: instance.progress
         });
-
-        const formatDate = (iso) =>
-          iso ? new Date(iso).toISOString().split("T")[0] : "";
-
-        const formattedData = {
-          patient: {
-            fullName: res.data.fullName,
-            cpf: res.data.cpf,
-            email: res.data.email,
-            phone: res.data.phone,
-            dateOfBirth: formatDate(res.data.dateOfBirth),
-            address: res.data.address,
-            profession: res.data.profession,
-            indication: res.data.indication,
-            gender: res.data.gender,
-          },
-        };
-
-        setFormData(formattedData);
-
-        // pega o primeiro tratamento
-        const instance = res.data.treatmentInstance?.[0];
-        if (instance) {
-          setTreatmentInstanceId(instance.id);
-          const tpl = TEMPLATES.find(t => t.name === instance.name);
-          setInitialTemplateData({
-            templateId: tpl ? tpl.id : null,
-            answers: instance.data,
-            treatmentDate: instance.treatmentDate,
-            progress: instance.progress
-          });
-        }
-      } catch (err) {
-        console.error(err);
-        alert("Erro ao buscar dados do paciente.");
       }
-    };
-    fetchPatient();
-  }, [id]);
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao buscar dados do paciente.");
+    }
+  };
+  fetchPatient();
+}, [id]);
+
 
   const steps = [
     { component: PatientStep, key: "patient" },
+    { component: ProgressStep, key: "progress" },
     { component: TemplateStep, key: "template" },
   ];
 
@@ -75,34 +83,6 @@ export default function EditPatientPage() {
       ...prev,
       [section]: { ...prev[section], ...data },
     }));
-  };
-
-  const handleUpdate = async () => {
-    try {
-      const token = localStorage.getItem("token");
-
-      const payload = {
-        fullName: formData.patient.fullName,
-        cpf: formData.patient.cpf,
-        email: formData.patient.email,
-        phone: formData.patient.phone,
-        dateOfBirth: new Date(formData.patient.dateOfBirth).toISOString(),
-        address: formData.patient.address,
-        profession: formData.patient.profession,
-        indication: formData.patient.indication,
-        gender: formData.patient.gender,
-      };
-
-      await api.put(`/patient/${id}`, payload, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      alert("Paciente atualizado com sucesso!");
-      navigate("/");
-    } catch (err) {
-      console.error("Erro ao atualizar paciente:", err);
-      alert("Erro ao atualizar paciente.");
-    }
   };
 
   const handleTemplateUpdate = async (templateId, answers, treatmentId) => {
@@ -139,7 +119,7 @@ export default function EditPatientPage() {
           patientId: id,
           templateId: Number(templateId),
           treatmentDate: new Date().toISOString(),
-          progress: null,
+          progress: formData.progress.items || [],
           data: dataTyped,
         },
         { headers: { Authorization: `Bearer ${token}` } }
@@ -184,7 +164,7 @@ export default function EditPatientPage() {
         {steps[step].key === "template" ? (
           <TemplateStep
             treatmentInstanceId={treatmentInstanceId}
-            patientId={id} // passa id do paciente
+            patientId={id}
             initialValues={initialTemplateData}
             onSubmit={handleTemplateUpdate}
           />
@@ -218,14 +198,11 @@ export default function EditPatientPage() {
           </button>
         )}
 
-        {/* só renderiza Atualizar Paciente se estiver no step 0 */}
         {step === 0 && (
           <button
             onClick={async () => {
-              // já atualiza paciente antes de avançar
               try {
                 const token = localStorage.getItem("token");
-
                 const payload = {
                   fullName: formData.patient.fullName,
                   cpf: formData.patient.cpf,
@@ -237,12 +214,9 @@ export default function EditPatientPage() {
                   indication: formData.patient.indication,
                   gender: formData.patient.gender,
                 };
-
                 await api.put(`/patient/${id}`, payload, {
                   headers: { Authorization: `Bearer ${token}` },
                 });
-
-                // se deu certo avança pro próximo step
                 setStep(step + 1);
               } catch (err) {
                 console.error("Erro ao atualizar paciente:", err);
@@ -262,8 +236,24 @@ export default function EditPatientPage() {
             Atualizar Paciente e Avançar →
           </button>
         )}
-      </div>
 
+        {step === 1 && (
+          <button
+            onClick={() => setStep(step + 1)}
+            style={{
+              padding: "0.7rem 1.2rem",
+              backgroundColor: "#037E63",
+              border: "none",
+              borderRadius: "8px",
+              color: "#fff",
+              fontWeight: "bold",
+              cursor: "pointer",
+            }}
+          >
+            Avançar para Tratamento →
+          </button>
+        )}
+      </div>
     </div>
   );
 }
