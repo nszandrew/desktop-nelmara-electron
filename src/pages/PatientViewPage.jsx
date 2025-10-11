@@ -135,6 +135,7 @@ function renderContent(data, navigate, triggerPrint = () => window.print()) {
         boxShadow: "0 8px 30px rgba(0,0,0,0.2)",
       }}
     >
+      {/* Botões */}
       <div
         className="no-print"
         style={{
@@ -149,11 +150,15 @@ function renderContent(data, navigate, triggerPrint = () => window.print()) {
         <button onClick={triggerPrint} style={btn("blue")}>
           🖨️ Imprimir
         </button>
-        <button onClick={() => navigate(`/edit-patient/${data.id}`)} style={btn("green")}>
+        <button
+          onClick={() => navigate(`/edit-patient/${data.id}`)}
+          style={btn("green")}
+        >
           <FaEdit /> Editar
         </button>
       </div>
 
+      {/* Dados Pessoais */}
       <section style={sectionStyle}>
         <div style={titleStyle}>
           <FaUser /> Dados Pessoais
@@ -169,6 +174,26 @@ function renderContent(data, navigate, triggerPrint = () => window.print()) {
         <p><strong>Endereço:</strong> {data.address}</p>
       </section>
 
+      {/* Progresso geral do paciente */}
+      {Array.isArray(data.progress) && data.progress.length > 0 && (
+        <section style={sectionStyle}>
+          <div style={titleStyle}>
+            <FaChartLine /> Progresso do Paciente
+          </div>
+          {data.progress.map((p, idx) => (
+            <div key={idx} style={progressCard}>
+              <p style={{ marginBottom: "0.5rem" }}>
+                <strong>Data:</strong> {formatDate(p.progressDate)}
+              </p>
+              <p style={{ whiteSpace: "pre-line" }}>
+                <strong>Descrição:</strong> {p.description || "-"}
+              </p>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {/* Cada tratamento e seu progresso */}
       {Array.isArray(data.treatmentInstance) &&
         data.treatmentInstance.length > 0 &&
         data.treatmentInstance.map((treatment, tIdx) => (
@@ -181,7 +206,8 @@ function renderContent(data, navigate, triggerPrint = () => window.print()) {
               <strong>Nome do Tratamento:</strong> {treatment.name}
             </p>
             <p>
-              <strong>Data do Tratamento:</strong> {formatDate(treatment.treatmentDate)}
+              <strong>Data do Tratamento:</strong>{" "}
+              {formatDate(treatment.treatmentDate)}
             </p>
 
             <div style={{ marginTop: "1rem" }}>
@@ -206,7 +232,7 @@ function renderContent(data, navigate, triggerPrint = () => window.print()) {
                       <strong>Data:</strong> {formatDate(p.progressDate)}
                     </p>
                     <p style={{ whiteSpace: "pre-line" }}>
-                      <strong>Descrição:</strong> {p.description}
+                      <strong>Descrição:</strong> {p.description || "-"}
                     </p>
                   </div>
                 ))}

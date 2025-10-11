@@ -334,7 +334,7 @@ export default function TemplateStep({ onSubmit, patientId, initialValues = {}, 
               </div>
 
               <div style={fieldStyle}>
-                <label style={labelStyle}>Data do Progresso</label>
+                <label style={labelStyle}>Data</label>
                 <input
                   type="date"
                   value={p.progressDate || ''}
