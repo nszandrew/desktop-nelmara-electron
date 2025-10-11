@@ -1,3 +1,4 @@
+// src/pages/ViewPatientPage.jsx
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../services/api";
@@ -9,6 +10,7 @@ import {
   FaRunning,
   FaEdit,
   FaArrowLeft,
+  FaChartLine,
 } from "react-icons/fa";
 import { TEMPLATES } from "../utils/Templates";
 
@@ -114,6 +116,14 @@ function renderContent(data, navigate, triggerPrint = () => window.print()) {
     gap: "0.6rem",
   };
 
+  const progressCard = {
+    backgroundColor: "#F9F9F9",
+    border: "1px solid #E0E0E0",
+    borderRadius: "10px",
+    padding: "1rem",
+    marginBottom: "1rem",
+  };
+
   return (
     <div
       style={{
@@ -136,19 +146,10 @@ function renderContent(data, navigate, triggerPrint = () => window.print()) {
         <button onClick={() => navigate("/")} style={btn("gray")}>
           <FaArrowLeft /> Voltar
         </button>
-        <button
-          onClick={() => {
-            console.log("PRINT button clicked!");
-            triggerPrint();
-          }}
-          style={btn("blue")}
-        >
+        <button onClick={triggerPrint} style={btn("blue")}>
           🖨️ Imprimir
         </button>
-        <button
-          onClick={() => navigate(`/edit-patient/${data.id}`)}
-          style={btn("green")}
-        >
+        <button onClick={() => navigate(`/edit-patient/${data.id}`)} style={btn("green")}>
           <FaEdit /> Editar
         </button>
       </div>
@@ -157,57 +158,59 @@ function renderContent(data, navigate, triggerPrint = () => window.print()) {
         <div style={titleStyle}>
           <FaUser /> Dados Pessoais
         </div>
-        <p>
-          <strong>Nome:</strong> {data.fullName}
-        </p>
-        <p>
-          <strong>CPF:</strong> {data.cpf}
-        </p>
-        <p>
-          <strong>Email:</strong> {data.email}
-        </p>
-        <p>
-          <strong>Telefone:</strong> {data.phone}
-        </p>
-        <p>
-          <strong>Gênero:</strong> {data.gender}
-        </p>
-        <p>
-          <strong>Data de Nascimento:</strong> {formatDate(data.dateOfBirth)}
-        </p>
-        <p>
-          <strong>Profissão:</strong> {data.profession}
-        </p>
-        <p>
-          <strong>Indicação:</strong> {data.indication}
-        </p>
-        <p>
-          <strong>Endereço:</strong> {data.address}
-        </p>
+        <p><strong>Nome:</strong> {data.fullName}</p>
+        <p><strong>CPF:</strong> {data.cpf}</p>
+        <p><strong>Email:</strong> {data.email}</p>
+        <p><strong>Telefone:</strong> {data.phone}</p>
+        <p><strong>Gênero:</strong> {data.gender}</p>
+        <p><strong>Data de Nascimento:</strong> {formatDate(data.dateOfBirth)}</p>
+        <p><strong>Profissão:</strong> {data.profession}</p>
+        <p><strong>Indicação:</strong> {data.indication}</p>
+        <p><strong>Endereço:</strong> {data.address}</p>
       </section>
 
       {data.treatmentInstance?.[0] && (
-        <section style={sectionStyle}>
-          <div style={titleStyle}>
-            <FaStethoscope /> Tratamento</div>
-          <p>
-            <strong>Nome do Tratamento:</strong>{" "}
-            {data.treatmentInstance[0].name}
-          </p>
-          <p>
-            <strong>Data do Tratamento:</strong>{" "}
-            {formatDate(data.treatmentInstance[0].treatmentDate)}
-          </p>
-          <div style={{ marginTop: "1rem" }}>
-            {Object.entries(data.treatmentInstance[0].data || {}).map(
-              ([key, value]) => (
-                <p key={key}>
-                  <strong>{formatKey(key)}:</strong> {String(value)}
-                </p>
-              )
+        <>
+          <section style={sectionStyle}>
+            <div style={titleStyle}>
+              <FaStethoscope /> Tratamento
+            </div>
+            <p>
+              <strong>Nome do Tratamento:</strong> {data.treatmentInstance[0].name}
+            </p>
+            <p>
+              <strong>Data do Tratamento:</strong> {formatDate(data.treatmentInstance[0].treatmentDate)}
+            </p>
+            <div style={{ marginTop: "1rem" }}>
+              {Object.entries(data.treatmentInstance[0].data || {}).map(
+                ([key, value]) => (
+                  <p key={key}>
+                    <strong>{formatKey(key)}:</strong> {String(value)}
+                  </p>
+                )
+              )}
+            </div>
+          </section>
+
+          {Array.isArray(data.treatmentInstance[0].progress) &&
+            data.treatmentInstance[0].progress.length > 0 && (
+              <section style={sectionStyle}>
+                <div style={titleStyle}>
+                  <FaChartLine /> Progresso do Paciente
+                </div>
+                {data.treatmentInstance[0].progress.map((p, idx) => (
+                  <div key={idx} style={progressCard}>
+                    <p style={{ marginBottom: "0.5rem" }}>
+                      <strong>Data:</strong> {formatDate(p.progressDate)}
+                    </p>
+                    <p style={{ whiteSpace: "pre-line" }}>
+                      <strong>Descrição:</strong> {p.description}
+                    </p>
+                  </div>
+                ))}
+              </section>
             )}
-          </div>
-        </section>
+        </>
       )}
     </div>
   );
@@ -218,8 +221,8 @@ function formatDate(iso) {
 }
 
 const labelMap = {};
-TEMPLATES.forEach(t => {
-  t.fields.forEach(f => {
+TEMPLATES.forEach((t) => {
+  t.fields.forEach((f) => {
     labelMap[f.fieldName] = f.label || f.fieldName;
   });
 });

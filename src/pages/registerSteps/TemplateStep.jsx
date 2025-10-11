@@ -47,7 +47,7 @@ export default function TemplateStep({ onSubmit, treatmentInstanceId, patientId,
             dataTyped[f.fieldName] = Number(val);
             break;
           case "BOOLEAN":
-            dataTyped[f.fieldName] = val === true || val === "true";
+            dataTyped[f.fieldName] = val;
             break;
           case "DATE":
             dataTyped[f.fieldName] = val ? val.split('T')[0] : null;
@@ -155,15 +155,54 @@ export default function TemplateStep({ onSubmit, treatmentInstanceId, patientId,
                 case "STRING": return <input type="text" placeholder={`Digite ${field.fieldName.toLowerCase()}...`} {...commonProps} />;
                 case "NUMBER": return <input type="number" placeholder="Digite um número..." {...commonProps} />;
                 case "DATE": return <input type="date" {...commonProps} />;
-                case "BOOLEAN":
+                case "BOOLEAN": {
+                  const currentValue = answers[field.fieldName] || { checked: null, note: "" };
+
                   return (
-                    <select {...commonProps}>
-                      <option value="">-- Selecione --</option>
-                      <option value="true">Sim</option>
-                      <option value="false">Não</option>
-                    </select>
+                    <div>
+                      <select
+                        value={
+                          currentValue.checked === null
+                            ? ""
+                            : currentValue.checked
+                              ? "true"
+                              : "false"
+                        }
+                        onChange={(e) => {
+                          const checked =
+                            e.target.value === ""
+                              ? null
+                              : e.target.value === "true";
+
+                          handleAnswer(field.fieldName, {
+                            checked,
+                            note: checked ? currentValue.note : ""
+                          });
+                        }}
+                        style={inputStyle}
+                      >
+                        <option value="">-- Selecione --</option>
+                        <option value="true">Sim</option>
+                        <option value="false">Não</option>
+                      </select>
+
+                      {currentValue.checked === true && (
+                        <input
+                          type="text"
+                          placeholder="Descreva aqui..."
+                          value={currentValue.note}
+                          onChange={(e) =>
+                            handleAnswer(field.fieldName, {
+                              checked: true,
+                              note: e.target.value
+                            })
+                          }
+                          style={{ ...inputStyle, marginTop: "8px" }}
+                        />
+                      )}
+                    </div>
                   );
-                default: return null;
+                }
               }
             };
             return (

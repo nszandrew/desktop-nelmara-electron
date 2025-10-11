@@ -3,7 +3,7 @@ import api from "../services/api";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 
-export default function HomePage() {
+export default function HomePage({ onLock }) {
   const [patients, setPatients] = useState([]);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -71,6 +71,16 @@ export default function HomePage() {
             onMouseLeave={(e) => (e.target.style.backgroundColor = "#00C9A7")}
           >
             + Novo Paciente
+          </button>
+
+          {/* 🔒 Botão para bloquear manualmente */}
+          <button
+            style={{ ...styles.button, backgroundColor: "#025C4A" }}
+            onClick={onLock}
+            onMouseEnter={(e) => (e.target.style.backgroundColor = "#037E63")}
+            onMouseLeave={(e) => (e.target.style.backgroundColor = "#025C4A")}
+          >
+            Bloquear Tela
           </button>
         </div>
 

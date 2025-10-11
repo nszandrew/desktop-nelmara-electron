@@ -101,7 +101,7 @@ function PinLockScreen({ onUnlock }) {
         {error && <div style={{ color: '#333333', background: '#00C9A7', borderRadius: 6, padding: '6px 12px', marginTop: 10, fontWeight: 500 }}>{error}</div>}
       </div>
       <div style={{ marginTop: 32, color: '#025C4A', fontSize: 16, fontWeight: 400 }}>
-        Por segurança, o acesso será bloqueado após 5 minutos de inatividade.
+        Por segurança, o acesso será bloqueado após 10 minutos de inatividade.
       </div>
     </div>
   );
@@ -114,7 +114,7 @@ export default function App() {
   // Função para resetar o timer de inatividade
   function resetTimeout() {
     clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => setLocked(true), 5 * 60 * 1000); // 5 minutos
+    timeoutRef.current = setTimeout(() => setLocked(true), 10 * 60 * 1000); // 10 minutos
   }
 
   useEffect(() => {
@@ -153,7 +153,7 @@ export default function App() {
                 path="/"
                 element={
                   <ProtectedRoute>
-                    <HomePage />
+                    <HomePage onLock={() => setLocked(true)} />
                   </ProtectedRoute>
                 }
               />
