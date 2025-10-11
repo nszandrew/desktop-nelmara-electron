@@ -1,4 +1,3 @@
-// src/pages/EditPatientPage.jsx
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import PatientStep from "./registerSteps/PatientStep";
@@ -6,7 +5,6 @@ import ProgressBar from "./registerSteps/ProgressBar";
 import ProgressStep from "./registerSteps/ProgressStep";
 import TemplateStep from "./registerSteps/TemplateStep";
 import api from "../services/api";
-import { TEMPLATES } from "../utils/Templates";
 
 export default function EditPatientPage() {
   const { id } = useParams();
@@ -15,7 +13,7 @@ export default function EditPatientPage() {
   const [patientData, setPatientData] = useState(null);
   const [formData, setFormData] = useState({
     patient: {},
-    progress: {}
+    progress: { items: [] }
   });
 
   useEffect(() => {
@@ -29,8 +27,6 @@ export default function EditPatientPage() {
         const formatDate = (iso) =>
           iso ? new Date(iso).toISOString().split("T")[0] : "";
 
-        const instance = res.data.treatmentInstance?.[0];
-
         const formattedData = {
           patient: {
             fullName: res.data.fullName,
@@ -43,11 +39,11 @@ export default function EditPatientPage() {
             indication: res.data.indication,
             gender: res.data.gender,
           },
-          progress: { items: instance?.progress || [] },
+          progress: { items: res.data.progress || [] },
         };
 
         setFormData(formattedData);
-        setPatientData(res.data); // salva todos os dados do paciente
+        setPatientData(res.data);
       } catch (err) {
         console.error(err);
         alert("Erro ao buscar dados do paciente.");
@@ -71,6 +67,10 @@ export default function EditPatientPage() {
     }));
   };
 
+  const handleProgressSaved = () => {
+    setStep(step + 1);
+  };
+
   const handleTemplateUpdate = async (treatments) => {
     try {
       alert("Tratamentos atualizados com sucesso!");
@@ -82,7 +82,7 @@ export default function EditPatientPage() {
   };
 
   if (!patientData) {
-    return <div>Carregando...</div>;
+    return <div style={{ padding: "2rem", textAlign: "center" }}>Carregando...</div>;
   }
 
   return (
@@ -112,22 +112,36 @@ export default function EditPatientPage() {
       >
         ← Voltar para o Início
       </button>
+
       <ProgressBar currentStep={step} totalSteps={steps.length} />
+
       <div style={{ minHeight: "400px", transition: "all 0.3s ease" }}>
-        {steps[step].key === "template" ? (
+        {step === 0 && (
+          <PatientStep
+            data={formData.patient}
+            onChange={(data) => handleChange("patient", data)}
+          />
+        )}
+
+        {step === 1 && (
+          <ProgressStep
+            data={formData.progress}
+            onChange={(data) => handleChange("progress", data)}
+            patientId={id}
+            onProgressSaved={handleProgressSaved}
+          />
+        )}
+
+        {step === 2 && patientData && (
           <TemplateStep
             patientId={id}
             initialValues={{}}
             existingTreatments={patientData.treatmentInstance || []}
             onSubmit={handleTemplateUpdate}
           />
-        ) : (
-          <CurrentStep
-            data={formData[steps[step].key]}
-            onChange={(data) => handleChange(steps[step].key, data)}
-          />
         )}
       </div>
+
       <div
         style={{
           display: "flex",
@@ -187,23 +201,6 @@ export default function EditPatientPage() {
             }}
           >
             Atualizar Paciente e Avançar →
-          </button>
-        )}
-
-        {step === 1 && (
-          <button
-            onClick={() => setStep(step + 1)}
-            style={{
-              padding: "0.7rem 1.2rem",
-              backgroundColor: "#037E63",
-              border: "none",
-              borderRadius: "8px",
-              color: "#fff",
-              fontWeight: "bold",
-              cursor: "pointer",
-            }}
-          >
-            Avançar para Tratamento →
           </button>
         )}
       </div>

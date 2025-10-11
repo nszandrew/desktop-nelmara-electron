@@ -1,6 +1,7 @@
 import React from "react";
+import api from "../../services/api";
 
-export default function ProgressStep({ data = {}, onChange }) {
+export default function ProgressStep({ data = {}, onChange, patientId, onProgressSaved }) {
   const handleChange = (index, field, value) => {
     const updated = [...(data.items || [])];
     updated[index] = { ...updated[index], [field]: value };
@@ -22,6 +23,34 @@ export default function ProgressStep({ data = {}, onChange }) {
     onChange({ items: updated });
   };
 
+  const handleSaveProgress = async () => {
+    if (!patientId) {
+      alert("ID do paciente não encontrado");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      
+      const payload = (data.items || []).map(p => ({
+        progressDate: p.progressDate,
+        description: p.description
+      }));
+
+      await api.post(`/patient/progress/${patientId}`, payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      alert("Progresso do paciente salvo com sucesso!");
+      if (onProgressSaved) {
+        onProgressSaved();
+      }
+    } catch (err) {
+      console.error("Erro ao salvar progresso:", err);
+      alert("Erro ao salvar progresso do paciente.");
+    }
+  };
+
   return (
     <div style={styles.container}>
       <h3 style={styles.title}>📈 Progresso do Paciente</h3>
@@ -29,14 +58,14 @@ export default function ProgressStep({ data = {}, onChange }) {
       {(data.items || []).map((p, idx) => (
         <div key={idx} style={styles.card}>
           <div style={styles.cardHeader}>
-            <span style={styles.cardIndex}>Etapa {idx + 1}</span>
+            <span style={styles.cardIndex}>Progresso - {idx + 1}</span>
             <button onClick={() => removeProgress(idx)} style={styles.removeBtn}>
               ✕ Remover
             </button>
           </div>
 
           <div style={styles.fieldGroup}>
-            <label style={styles.label}>Data do Progresso</label>
+            <label style={styles.label}>Data</label>
             <input
               type="date"
               value={p.progressDate || ""}
@@ -59,6 +88,12 @@ export default function ProgressStep({ data = {}, onChange }) {
       <button onClick={addProgress} style={styles.addBtn}>
         + Adicionar Progresso
       </button>
+
+      {(data.items || []).length > 0 && (
+        <button onClick={handleSaveProgress} style={styles.saveBtn}>
+          💾 Salvar Progresso do Paciente
+        </button>
+      )}
     </div>
   );
 }
@@ -124,6 +159,18 @@ const styles = {
   },
   addBtn: {
     backgroundColor: "#037E63",
+    border: "none",
+    color: "#fff",
+    padding: "0.6rem 1.2rem",
+    borderRadius: "8px",
+    fontWeight: "bold",
+    cursor: "pointer",
+    fontSize: "1rem",
+    transition: "background-color 0.2s ease",
+    marginRight: "8px",
+  },
+  saveBtn: {
+    backgroundColor: "#27ae60",
     border: "none",
     color: "#fff",
     padding: "0.6rem 1.2rem",
