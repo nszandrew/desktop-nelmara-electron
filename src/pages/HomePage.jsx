@@ -33,7 +33,7 @@ export default function HomePage({ onLock }) {
     try {
       const token = localStorage.getItem("token");
       const res = await api.get(
-        `/patient?page=${page}&size=10&direction=desc`,
+        `/patient?page=${page}&size=10&direction=asc`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

@@ -169,36 +169,38 @@ function renderContent(data, navigate, triggerPrint = () => window.print()) {
         <p><strong>Endereço:</strong> {data.address}</p>
       </section>
 
-      {data.treatmentInstance?.[0] && (
-        <>
-          <section style={sectionStyle}>
+      {Array.isArray(data.treatmentInstance) &&
+        data.treatmentInstance.length > 0 &&
+        data.treatmentInstance.map((treatment, tIdx) => (
+          <section key={tIdx} style={sectionStyle}>
             <div style={titleStyle}>
-              <FaStethoscope /> Tratamento
+              <FaStethoscope /> Tratamento - {treatment.name}
             </div>
-            <p>
-              <strong>Nome do Tratamento:</strong> {data.treatmentInstance[0].name}
-            </p>
-            <p>
-              <strong>Data do Tratamento:</strong> {formatDate(data.treatmentInstance[0].treatmentDate)}
-            </p>
-            <div style={{ marginTop: "1rem" }}>
-              {Object.entries(data.treatmentInstance[0].data || {}).map(
-                ([key, value]) => (
-                  <p key={key}>
-                    <strong>{formatKey(key)}:</strong> {String(value)}
-                  </p>
-                )
-              )}
-            </div>
-          </section>
 
-          {Array.isArray(data.treatmentInstance[0].progress) &&
-            data.treatmentInstance[0].progress.length > 0 && (
-              <section style={sectionStyle}>
-                <div style={titleStyle}>
-                  <FaChartLine /> Progresso do Paciente
+            <p>
+              <strong>Nome do Tratamento:</strong> {treatment.name}
+            </p>
+            <p>
+              <strong>Data do Tratamento:</strong> {formatDate(treatment.treatmentDate)}
+            </p>
+
+            <div style={{ marginTop: "1rem" }}>
+              {Object.entries(treatment.data || {}).map(([key, value]) => (
+                <p key={key}>
+                  <strong>{formatKey(key)}:</strong>{" "}
+                  {typeof value === "object" && value !== null && "checked" in value
+                    ? `${value.checked ? "Sim" : "Não"}${value.note ? ` - ${value.note}` : ""}`
+                    : String(value)}
+                </p>
+              ))}
+            </div>
+
+            {Array.isArray(treatment.progress) && treatment.progress.length > 0 && (
+              <div style={{ marginTop: "1.5rem" }}>
+                <div style={{ ...titleStyle, fontSize: "1rem" }}>
+                  <FaChartLine /> Progresso do Tratamento
                 </div>
-                {data.treatmentInstance[0].progress.map((p, idx) => (
+                {treatment.progress.map((p, idx) => (
                   <div key={idx} style={progressCard}>
                     <p style={{ marginBottom: "0.5rem" }}>
                       <strong>Data:</strong> {formatDate(p.progressDate)}
@@ -208,10 +210,10 @@ function renderContent(data, navigate, triggerPrint = () => window.print()) {
                     </p>
                   </div>
                 ))}
-              </section>
+              </div>
             )}
-        </>
-      )}
+          </section>
+        ))}
     </div>
   );
 }

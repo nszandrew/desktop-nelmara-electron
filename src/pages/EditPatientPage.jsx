@@ -12,63 +12,49 @@ export default function EditPatientPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
-  const [treatmentInstanceId, setTreatmentInstanceId] = useState(null);
-  const [initialTemplateData, setInitialTemplateData] = useState({});
+  const [patientData, setPatientData] = useState(null);
   const [formData, setFormData] = useState({
     patient: {},
-    progress: {} // adiciona progress
+    progress: {}
   });
 
-useEffect(() => {
-  const fetchPatient = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await api.get(`/patient/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const formatDate = (iso) =>
-        iso ? new Date(iso).toISOString().split("T")[0] : "";
-
-      // pega o primeiro tratamento antes
-      const instance = res.data.treatmentInstance?.[0];
-
-      // agora monta o formData já com o progress do backend
-      const formattedData = {
-        patient: {
-          fullName: res.data.fullName,
-          cpf: res.data.cpf,
-          email: res.data.email,
-          phone: res.data.phone,
-          dateOfBirth: formatDate(res.data.dateOfBirth),
-          address: res.data.address,
-          profession: res.data.profession,
-          indication: res.data.indication,
-          gender: res.data.gender,
-        },
-        progress: { items: instance?.progress || [] },
-      };
-
-      setFormData(formattedData);
-
-      if (instance) {
-        setTreatmentInstanceId(instance.id);
-        const tpl = TEMPLATES.find(t => t.name === instance.name);
-        setInitialTemplateData({
-          templateId: tpl ? tpl.id : null,
-          answers: instance.data,
-          treatmentDate: instance.treatmentDate,
-          progress: instance.progress
+  useEffect(() => {
+    const fetchPatient = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await api.get(`/patient/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Erro ao buscar dados do paciente.");
-    }
-  };
-  fetchPatient();
-}, [id]);
 
+        const formatDate = (iso) =>
+          iso ? new Date(iso).toISOString().split("T")[0] : "";
+
+        const instance = res.data.treatmentInstance?.[0];
+
+        const formattedData = {
+          patient: {
+            fullName: res.data.fullName,
+            cpf: res.data.cpf,
+            email: res.data.email,
+            phone: res.data.phone,
+            dateOfBirth: formatDate(res.data.dateOfBirth),
+            address: res.data.address,
+            profession: res.data.profession,
+            indication: res.data.indication,
+            gender: res.data.gender,
+          },
+          progress: { items: instance?.progress || [] },
+        };
+
+        setFormData(formattedData);
+        setPatientData(res.data); // salva todos os dados do paciente
+      } catch (err) {
+        console.error(err);
+        alert("Erro ao buscar dados do paciente.");
+      }
+    };
+    fetchPatient();
+  }, [id]);
 
   const steps = [
     { component: PatientStep, key: "patient" },
@@ -85,52 +71,19 @@ useEffect(() => {
     }));
   };
 
-  const handleTemplateUpdate = async (templateId, answers, treatmentId) => {
+  const handleTemplateUpdate = async (treatments) => {
     try {
-      const token = localStorage.getItem("token");
-
-      // converte tipos igual no TemplateStep
-      const template = TEMPLATES.find((t) => t.id === Number(templateId));
-      const dataTyped = {};
-      template.fields.forEach((f) => {
-        const val = answers[f.fieldName];
-        if (val === "" || val === undefined || val === null) {
-          dataTyped[f.fieldName] = null;
-        } else {
-          switch (f.fieldType) {
-            case "NUMBER":
-              dataTyped[f.fieldName] = Number(val);
-              break;
-            case "BOOLEAN":
-              dataTyped[f.fieldName] = val === true || val === "true";
-              break;
-            case "DATE":
-              dataTyped[f.fieldName] = new Date(val).toISOString().split("T")[0];
-              break;
-            default:
-              dataTyped[f.fieldName] = val;
-          }
-        }
-      });
-
-      await api.put(
-        `/treatment-instance/${treatmentId}`,
-        {
-          patientId: id,
-          templateId: Number(templateId),
-          treatmentDate: new Date().toISOString(),
-          progress: formData.progress.items || [],
-          data: dataTyped,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      alert("Template atualizado com sucesso!");
+      alert("Tratamentos atualizados com sucesso!");
       navigate("/");
     } catch (err) {
-      console.error("Erro ao atualizar tratamento:", err);
-      alert("Erro ao atualizar tratamento.");
+      console.error("Erro ao atualizar tratamentos:", err);
+      alert("Erro ao atualizar tratamentos.");
     }
   };
+
+  if (!patientData) {
+    return <div>Carregando...</div>;
+  }
 
   return (
     <div
@@ -163,9 +116,9 @@ useEffect(() => {
       <div style={{ minHeight: "400px", transition: "all 0.3s ease" }}>
         {steps[step].key === "template" ? (
           <TemplateStep
-            treatmentInstanceId={treatmentInstanceId}
             patientId={id}
-            initialValues={initialTemplateData}
+            initialValues={{}}
+            existingTreatments={patientData.treatmentInstance || []}
             onSubmit={handleTemplateUpdate}
           />
         ) : (
