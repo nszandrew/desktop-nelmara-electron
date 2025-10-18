@@ -1,924 +1,352 @@
-import React, { useState, useRef, useEffect } from "react";
-import { FaArrowLeft, FaTrash, FaEye, FaEyeSlash, FaFilePdf, FaPlus, FaTimes, FaEdit } from "react-icons/fa";
+// src/pages/GalleryPage.jsx
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import styled, { keyframes } from "styled-components";
+import { FaChevronLeft, FaChevronRight, FaTimes } from "react-icons/fa";
 import Sidebar from "./Sidebar";
-import api from "../services/api";
 
-import cervicalImg from "/assets/cervical.png";
-import dorsalImg from "/assets/dorsal.png";
-import lombarImg from "/assets/lombar.png";
-import membrosSuperioresImg from "/assets/membros-superiores.png";
-import punhoCotoveloImg from "/assets/punho-cotovelo.png";
-import tornozeloPeImg from "/assets/tornozelo-pe.png";
-import joelhoImg from "/assets/joelho.png";
-import quadrilImg from "/assets/quadril.png";
-import muscularImg from "/assets/muscular.png";
-import colicaMenstrualImg from "/assets/colica-menstrual.png";
-import ATMImg from "/assets/atm.png";
-import colunaImg from "/assets/coluna.png";
-import anatomicoImg from "/assets/modelo.png";
-import balancementoDeJoelhos from "/assets/balanceamento-de-joelhos.png";
-import distencaoMuscular from "/assets/distensao-muscular.png";
-import edemaDeJoelho from "/assets/edema-de-joelho.png";
-import mao from "/assets/mao.png";
-import superiorLateral from "/assets/superior-lateral.png";
-import quadril2 from "/assets/quadril-2.png";
+const COLORS = {
+  green900: "#025C4A",
+  green800: "#037E63",
+  green700: "#029B7B",
+  green500: "#00C9A7",
+  gray900: "#333333",
+  gray100: "#F5F5F5",
+  white: "#FFFFFF",
+};
 
-// Modal para editar anotação
-function AnnotationModal({ open, onClose, point, onSave }) {
-  const [text, setText] = useState('');
+const Wrapper = styled.div`
+  display: flex;
+  min-height: 100vh;
+  background: ${COLORS.gray100};
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+`;
 
-  useEffect(() => {
-    setText(point?.imgAnnotation || '');
-  }, [point]);
+const Content = styled.main`
+  margin-left: 70px;
+  width: 100%;
+  padding: 2rem;
+`;
 
-  function handleSave() {
-    onSave(text);
-    onClose();
+const Card = styled.section`
+  max-width: 1200px;
+  margin: 0 auto;
+  background: ${COLORS.white};
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+`;
+
+const Header = styled.header`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 1rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 2px solid ${COLORS.green500};
+`;
+
+const Title = styled.h1`
+  margin: 0;
+  color: ${COLORS.green900};
+  font-weight: 700;
+  font-size: 1.6rem;
+`;
+
+const Sub = styled.p`
+  margin: 0.35rem 0 0 0;
+  color: ${COLORS.gray900};
+  opacity: 0.8;
+`;
+
+const floatY = keyframes`
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+`;
+
+const CarouselWrap = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+`;
+
+const ArrowBtn = styled.button`
+  border: none;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: ${COLORS.green800};
+  color: ${COLORS.white};
+  display: grid;
+  place-items: center;
+  box-shadow: 0 6px 18px rgba(2, 92, 74, 0.25);
+  transition: transform 0.15s ease, filter 0.15s ease;
+  z-index: 2; /* garante que fique acima do carrossel */
+  &:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.05);
+  }
+`;
+
+const Track = styled.div`
+  flex: 1;
+  overflow-x: auto; /* ← troca de hidden pra auto */
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  padding-bottom: 10px;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+`;
+
+const Row = styled.div`
+  display: flex;
+  gap: 0.9rem;
+  width: max-content;
+`;
+
+const Thumb = styled.button`
+  width: 140px;
+  height: 100px;
+  border: none;
+  cursor: pointer;
+  border-radius: 14px;
+  overflow: hidden;
+  background: ${COLORS.gray100};
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.06);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
   }
 
-  if (!open || !point) return null;
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    animation: ${floatY} 4s ease-in-out infinite;
+  }
+`;
 
-  return (
-    <div style={{
-      position: 'fixed',
-      top: 0, left: 0, width: '100vw', height: '100vh',
-      background: 'rgba(2,92,74,0.25)', zIndex: 9999,
-      display: 'flex', alignItems: 'center', justifyContent: 'center'
-    }}>
-      <div style={{
-        background: '#FFFFFF', borderRadius: 12, padding: 24, minWidth: 320,
-        boxShadow: '0 8px 32px rgba(2,92,74,0.15)', border: '2px solid #00C9A7',
-        display: 'flex', flexDirection: 'column', gap: 14
-      }}>
-        <h4 style={{ color: '#037E63', margin: 0 }}>Editar anotação</h4>
-        <textarea
-          value={text}
-          onChange={e => setText(e.target.value)}
-          style={{
-            minHeight: 80, maxHeight: 180, resize: 'vertical',
-            border: '1px solid #025C4A', borderRadius: 8,
-            padding: 10, fontSize: 15, color: '#025C4A', background: '#F5F5F5'
-          }}
-          placeholder="Digite sua anotação aqui..."
-        />
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button
-            onClick={handleSave}
-            style={{
-              background: '#037E63', color: '#FFF', border: 'none',
-              borderRadius: 8, padding: '8px 18px', fontWeight: 600, cursor: 'pointer'
-            }}
-          >Salvar</button>
-          <button
-            onClick={onClose}
-            style={{
-              background: '#F5F5F5', color: '#025C4A', border: '1px solid #00C9A7',
-              borderRadius: 8, padding: '8px 18px', fontWeight: 500, cursor: 'pointer'
-            }}
-          >Cancelar</button>
-        </div>
-      </div>
-    </div>
-  );
+const Viewer = styled.div`
+  margin-top: 1.25rem;
+  background: ${COLORS.gray100};
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+  padding: 1.25rem;
+  display: grid;
+  place-items: center;
+`;
+
+const MainImage = styled.img`
+  width: min(100%, 980px);
+  max-height: 72vh;
+  object-fit: contain;
+  border-radius: 12px;
+  background: #fafafa;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  cursor: zoom-in;
+`;
+
+const Backdrop = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(2, 92, 74, 0.25);
+  display: grid;
+  place-items: center;
+  backdrop-filter: blur(3px);
+`;
+
+const Lightbox = styled.div`
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  max-width: 100%;
+  max-height: 100%;
+  background: ${COLORS.white};
+  border-radius: 0; /* ocupa tela toda */
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+  border: none;
+  display: flex;
+  flex-direction: column;
+`;
+
+const LightboxBody = styled.div`
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: ${COLORS.gray100};
+  overflow: auto; /* permite rolar se imagem for muito grande */
+`;
+
+const LightboxImg = styled.img`
+  max-width: 98%;
+  max-height: 90vh; /* imagem nunca passa do viewport */
+  object-fit: contain;
+  border-radius: 8px;
+  margin: auto;
+  display: block;
+`;
+
+const LightboxTop = styled.div`
+  flex: 0 0 56px;
+  background: linear-gradient(90deg, ${COLORS.green800}, ${COLORS.green700});
+  color: ${COLORS.white};
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+`;
+
+
+
+const Close = styled.button`
+  border: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: ${COLORS.white};
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: transform 0.12s ease, background 0.12s ease;
+  &:hover {
+    transform: scale(1.04);
+    background: rgba(255, 255, 255, 0.22);
+  }
+`;
+
+function clamp(n, min, max) {
+  return Math.max(min, Math.min(max, n));
 }
 
-export default function RmaInteractivePage() {
-  const rmaPages = [
-    { id: 1, title: "CERVICAL", imageSrc: cervicalImg, imgName: "cervical" },
-    { id: 2, title: "DORSAL", imageSrc: dorsalImg, imgName: "dorsal" },
-    { id: 3, title: "LOMBAR", imageSrc: lombarImg, imgName: "lombar" },
-    { id: 4, title: "MEMBROS SUPERIORES (MMSS)", imageSrc: membrosSuperioresImg, imgName: "membros-superiores" },
-    { id: 5, title: "PUNHO / COTOVELO", imageSrc: punhoCotoveloImg, imgName: "punho-cotovelo" },
-    { id: 6, title: "TORNOZELO E PÉ", imageSrc: tornozeloPeImg, imgName: "tornozelo-pe" },
-    { id: 7, title: "JOELHO", imageSrc: joelhoImg, imgName: "joelho" },
-    { id: 8, title: "QUADRIL", imageSrc: quadrilImg, imgName: "quadril" },
-    { id: 9, title: "MUSCULAR", imageSrc: muscularImg, imgName: "muscular" },
-    { id: 10, title: "CÓLICA MENSTRUAL", imageSrc: colicaMenstrualImg, imgName: "colica-menstrual" },
-    { id: 11, title: "ATM", imageSrc: ATMImg, imgName: "atm" },
-    { id: 12, title: "COLUNA", imageSrc: colunaImg, imgName: "coluna" },
-    { id: 13, title: "MODELOS ANATÔMICOS", imageSrc: anatomicoImg, imgName: "modelo-anatomico" },
-    { id: 14, title: "BALANCEAMENTO DE JOELHOS", imageSrc: balancementoDeJoelhos, imgName: "balanceamento-de-joelhos" },
-    { id: 15, title: "DISTENÇÃO MUSCULAR", imageSrc: distencaoMuscular, imgName: "distencao-muscular" },
-    { id: 16, title: "MÃO", imageSrc: mao, imgName: "mao" },
-    { id: 17, title: "EDEMA DE JOELHO", imageSrc: edemaDeJoelho, imgName: "edema-de-joelho" },
-    { id: 18, title: "SUPERIOR LATERAL", imageSrc: superiorLateral, imgName: "superior-lateral" },
-    { id: 19, title: "QUADRIL - 2", imageSrc: quadril2, imgName: "quadril-2" },
-  ];
+export default function GalleryPage() {
+  const images = useMemo(
+    () =>
+      Array.from({ length: 20 }, (_, i) => ({
+        src: `/assets/${i + 1}.png`,
+      })),
+    []
+  );
 
-  // Estados
-  const [currentPageId, setCurrentPageId] = useState(1);
-  const [savedPoints, setSavedPoints] = useState({});
-  const [showPoints, setShowPoints] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
-  const [notification, setNotification] = useState("");
-  const [selectedPointType, setSelectedPointType] = useState("PLUS"); // PLUS ou X
-  const [annotationModal, setAnnotationModal] = useState({ open: false, point: null, pageId: null });
+  const [current, setCurrent] = useState(0);
+  const [open, setOpen] = useState(false);
+  const trackRef = useRef(null);
 
-  // Carregar pontos do backend ao montar o componente
+  const scrollBy = (dir) => {
+    const el = trackRef.current;
+    if (!el) return;
+    const amount = el.clientWidth * 0.8;
+    el.scrollBy({ left: dir * amount, behavior: "smooth" });
+  };
+
   useEffect(() => {
-    loadPointsFromBackend();
-  }, []);
-
-  // Funções de API para comunicação com o backend
-  const savePointToBackend = async (pageId, point) => {
-    setIsLoading(true);
-    try {
-      const token = localStorage.getItem("token");
-      const currentPage = rmaPages.find(p => p.id === pageId);
-      
-      await api.post('/rma/points', 
-        { 
-          x: point.x,
-          y: point.y,
-          timestamp: point.timestamp,
-          imgName: currentPage.imgName,
-          format: point.format // Enviando o formato do ponto
-        }, 
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-      showNotification("Ponto salvo com sucesso! ✅", "success");
-    } catch (error) {
-      console.error('Erro ao salvar ponto:', error);
-      showNotification("Erro ao salvar ponto ❌", "error");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loadPointsFromBackend = async () => {
-    setIsLoading(true);
-    try {
-      const token = localStorage.getItem("token");
-      const response = await api.get('/rma/points', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      if (response.data && response.data.information) {
-        // Converter a estrutura do backend para a estrutura do frontend
-        const convertedPoints = {};
-        
-        response.data.information.forEach(imageGroup => {
-          // Encontrar o ID da página pelo imgName
-          const page = rmaPages.find(p => p.imgName === imageGroup.imageName);
-          if (page) {
-            convertedPoints[page.id] = imageGroup.rmaPoints.map(point => ({
-              id: point.id,
-              x: point.x,
-              y: point.y,
-              timestamp: point.timestamp,
-              format: point.format || "PLUS",
-              imgAnnotation: point.imgAnnotation, // <-- Corrigido para popular a anotação
-              imgName: point.imgName
-            }));
-          }
-        });
-        
-        setSavedPoints(convertedPoints);
-        showNotification("Pontos carregados! 📥", "success");
-      } else {
-        setSavedPoints({});
-        showNotification("Nenhum ponto encontrado", "info");
-      }
-    } catch (error) {
-      console.error('Erro ao carregar pontos:', error);
-      showNotification("Erro ao carregar pontos ❌", "error");
-      setSavedPoints({});
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Funções de gerenciamento de pontos
-  const addPoint = async (pageId, point) => {
-    const newPoint = {
-      ...point,
-      id: Date.now() + Math.random(), // ID temporário para o frontend
-      timestamp: Date.now(),
-      format: selectedPointType // Adicionar o tipo de ponto selecionado
+    const onKey = (e) => {
+      if (!open) return;
+      if (e.key === "Escape") setOpen(false);
+      if (e.key === "ArrowLeft")
+        setCurrent((c) => clamp(c - 1, 0, images.length - 1));
+      if (e.key === "ArrowRight")
+        setCurrent((c) => clamp(c + 1, 0, images.length - 1));
     };
-    
-    // Atualizar estado local primeiro
-    const updatedPoints = {
-      ...savedPoints,
-      [pageId]: [...(savedPoints[pageId] || []), newPoint]
-    };
-    setSavedPoints(updatedPoints);
-    showNotification(`Ponto ${selectedPointType === 'PLUS' ? '+' : 'X'} adicionado! 📍`, "success");
-    
-    // Salvar no backend
-    await savePointToBackend(pageId, newPoint);
-    
-    // Recarregar do backend para pegar o ID real
-    await loadPointsFromBackend();
-  };
-
-  const removePoint = async (pageId, pointId) => {
-    try {
-      const token = localStorage.getItem("token");
-      
-      // Remover do backend primeiro
-      await api.delete(`/rma/points/${pointId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      // Atualizar estado local
-      const updatedPoints = {
-        ...savedPoints,
-        [pageId]: savedPoints[pageId]?.filter(p => p.id !== pointId) || []
-      };
-      setSavedPoints(updatedPoints);
-      showNotification("Ponto removido! 🗑️", "info");
-      
-    } catch (error) {
-      console.error('Erro ao remover ponto:', error);
-      showNotification("Erro ao remover ponto ❌", "error");
-    }
-  };
-
-  const clearPagePoints = async (pageId) => {
-    try {
-      const token = localStorage.getItem("token");
-      const currentPage = rmaPages.find(p => p.id === pageId);
-      const currentPoints = savedPoints[pageId] || [];
-      
-      // Remover todos os pontos da página no backend
-      for (const point of currentPoints) {
-        await api.delete(`/rma/points/${point.id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-      }
-      
-      // Atualizar estado local
-      const updatedPoints = {
-        ...savedPoints,
-        [pageId]: []
-      };
-      setSavedPoints(updatedPoints);
-      showNotification("Todos os pontos da página foram removidos! 🧹", "info");
-      
-    } catch (error) {
-      console.error('Erro ao limpar pontos:', error);
-      showNotification("Erro ao limpar pontos ❌", "error");
-    }
-  };
-
-  const showNotification = (message, type = "info") => {
-    setNotification({ message, type });
-    setTimeout(() => setNotification(""), 3000);
-  };
-
-  // Função para salvar anotação no backend
-  const saveAnnotation = async (pageId, point, annotationText) => {
-    setIsLoading(true);
-    try {
-      const token = localStorage.getItem("token");
-      await api.patch('/rma/points/annotation', null, {
-        params: { annotation: annotationText, pointId: point.id },
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      showNotification("Anotação salva com sucesso! 📝", "success");
-      await loadPointsFromBackend();
-    } catch (error) {
-      console.error('Erro ao salvar anotação:', error);
-      showNotification("Erro ao salvar anotação ❌", "error");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Componente do ponto personalizado
-  const CustomPoint = ({ point, onClick }) => {
-    const isPlus = point.format === "PLUS";
-    return (
-      <div
-        style={{
-          position: 'absolute',
-          left: `${point.x}%`,
-          top: `${point.y}%`,
-          width: '24px',
-          height: '24px',
-          cursor: 'pointer',
-          transform: 'translate(-50%, -50%)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '18px',
-          fontWeight: 'bold',
-          color: '#FFFFFF',
-          backgroundColor: isPlus ? '#037E63' : '#E74C3C',
-          borderRadius: isPlus ? '50%' : '4px',
-          border: '2px solid white',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
-          animation: 'pulse 2s infinite',
-          transition: 'all 0.2s ease',
-          zIndex: 10
-        }}
-        onClick={e => {
-          e.stopPropagation();
-          onClick();
-        }}
-        onMouseEnter={e => {
-          e.target.style.transform = 'translate(-50%, -50%) scale(1.2)';
-        }}
-        onMouseLeave={e => {
-          e.target.style.transform = 'translate(-50%, -50%) scale(1)';
-        }}
-        title={`Tipo: ${isPlus ? 'Plus (+)' : 'X'}\nClique para remover\nClique no lápis para anotação\nCriado em: ${new Date(point.timestamp).toLocaleString()}`}
-      >
-        {isPlus ? '+' : '×'}
-        <span
-          style={{
-            position: 'absolute',
-            right: -18,
-            top: -8,
-            background: '#00C9A7',
-            borderRadius: '50%',
-            width: 22,
-            height: 22,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-            cursor: 'pointer',
-            border: '2px solid #FFF'
-          }}
-          title="Editar anotação"
-          onClick={e => {
-            e.stopPropagation();
-            setAnnotationModal({
-              open: true,
-              point,
-              pageId: point.imgName ? rmaPages.find(p => p.imgName === point.imgName)?.id : currentPageId
-            });
-          }}
-        >
-          <FaEdit size={14} color="#025C4A" />
-        </span>
-      </div>
-    );
-  };
-
-  // Componente da imagem interativa
-  const InteractiveImage = ({ page }) => {
-    const imageRef = useRef(null);
-    const [imageLoaded, setImageLoaded] = useState(false);
-
-    const handleImageClick = (e) => {
-      if (!imageRef.current) return;
-      
-      const rect = imageRef.current.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 100;
-      const y = ((e.clientY - rect.top) / rect.height) * 100;
-      
-      addPoint(page.id, { x, y });
-    };
-
-    const currentPoints = savedPoints[page.id] || [];
-
-    return (
-      <div style={{ position: 'relative', display: 'inline-block', width: '800px', height: '600px' }}>
-        <img
-          ref={imageRef}
-          src={page.imageSrc}
-          alt={page.title}
-          style={{
-            width: '800px',
-            height: '600px',
-            objectFit: 'contain',
-            cursor: 'crosshair',
-            borderRadius: '8px',
-            boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
-            opacity: imageLoaded ? 1 : 0.5,
-            transition: 'opacity 0.3s ease',
-            backgroundColor: '#f8f9fa'
-          }}
-          onClick={handleImageClick}
-          onLoad={() => setImageLoaded(true)}
-          onError={() => {
-            showNotification(`Erro ao carregar imagem: ${page.title} ❌`, "error");
-          }}
-        />
-        
-        {!imageLoaded && (
-          <div style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            color: '#666',
-            fontSize: '1.2rem'
-          }}>
-            Carregando imagem...
-          </div>
-        )}
-
-        {/* Renderizar pontos salvos */}
-        {showPoints && currentPoints.map(point => (
-          <CustomPoint
-            key={point.id}
-            point={point}
-            onClick={() => removePoint(page.id, point.id)}
-          />
-        ))}
-
-        {/* CSS para animação */}
-        <style jsx>{`
-          @keyframes pulse {
-            0% { box-shadow: 0 2px 8px rgba(0,0,0,0.4), 0 0 0 0 rgba(3, 126, 99, 0.7); }
-            70% { box-shadow: 0 2px 8px rgba(0,0,0,0.4), 0 0 0 10px rgba(3, 126, 99, 0); }
-            100% { box-shadow: 0 2px 8px rgba(0,0,0,0.4), 0 0 0 0 rgba(3, 126, 99, 0); }
-          }
-        `}</style>
-      </div>
-    );
-  };
-
-  // Painel de controle dos pontos
-  const PointsPanel = ({ pageId }) => {
-    const currentPoints = savedPoints[pageId] || [];
-    const plusPoints = currentPoints.filter(p => p.format === "PLUS");
-    const xPoints = currentPoints.filter(p => p.format === "X");
-    
-    return (
-      <div style={{
-        marginTop: '1.5rem',
-        padding: '1.5rem',
-        backgroundColor: '#f8f9fa',
-        borderRadius: '12px',
-        border: '1px solid #e9ecef'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h4 style={{ margin: 0, color: '#025C4A' }}>
-            📍 Pontos Marcados ({currentPoints.length}) • 
-            <span style={{ color: '#037E63', marginLeft: '0.5rem' }}>+ {plusPoints.length}</span> • 
-            <span style={{ color: '#E74C3C', marginLeft: '0.5rem' }}>× {xPoints.length}</span>
-          </h4>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button
-              onClick={() => setShowPoints(!showPoints)}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: showPoints ? '#037E63' : '#333333',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '0.9rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}
-            >
-              {showPoints ? <FaEye /> : <FaEyeSlash />}
-              {showPoints ? 'Ocultar' : 'Mostrar'}
-            </button>
-            {currentPoints.length > 0 && (
-              <button
-                onClick={() => clearPagePoints(pageId)}
-                style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#029B7B',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '0.9rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem'
-                }}
-              >
-                <FaTrash /> Limpar Todos
-              </button>
-            )}
-          </div>
-        </div>
-
-        {currentPoints.length === 0 ? (
-          <p style={{ color: '#666', fontStyle: 'italic', margin: 0, textAlign: 'center', padding: '1rem' }}>
-            Nenhum ponto marcado. Clique na imagem para adicionar pontos.
-          </p>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.5rem' }}>
-            {currentPoints.map((point, index) => (
-              <div
-                key={point.id}
-                style={{
-                  padding: '0.75rem',
-                  backgroundColor: '#FFFFFF',
-                  borderRadius: '8px',
-                  border: `2px solid ${point.format === 'PLUS' ? '#037E63' : '#E74C3C'}`,
-                  fontSize: '0.85rem',
-                  position: 'relative'
-                }}
-              >
-                <div style={{ 
-                  fontWeight: 'bold', 
-                  color: point.format === 'PLUS' ? '#037E63' : '#E74C3C',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  marginBottom: '0.25rem'
-                }}>
-                  <span style={{ 
-                    fontSize: '1rem',
-                    backgroundColor: point.format === 'PLUS' ? '#037E6315' : '#E74C3C15',
-                    padding: '2px 6px',
-                    borderRadius: '4px'
-                  }}>
-                    {point.format === 'PLUS' ? '+' : '×'}
-                  </span>
-                  Ponto {index + 1}
-                </div>
-                <div style={{ color: '#333333' }}>
-                  X: {point.x.toFixed(1)}% | Y: {point.y.toFixed(1)}%
-                </div>
-                <div style={{ color: '#333333', fontSize: '0.75rem', marginTop: '0.25rem' }}>
-                  {new Date(point.timestamp).toLocaleString()}
-                </div>
-                <div style={{ marginTop: 8 }}>
-                  <span style={{ color: '#025C4A', fontWeight: 500 }}>Anotação:</span>
-                  <div
-                    style={{
-                      background: '#F5F5F5',
-                      borderRadius: 6,
-                      padding: '6px 10px',
-                      minHeight: 24,
-                      marginTop: 4,
-                      fontSize: 14,
-                      color: '#333333',
-                      cursor: 'pointer',
-                      border: '1px solid #00C9A7',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8
-                    }}
-                    title="Clique no lápis do ponto para editar anotação"
-                  >
-                    <span>
-                      {point.imgAnnotation && point.imgAnnotation.trim() !== ''
-                        ? point.imgAnnotation
-                        : <span style={{ color: '#666' }}>Sem anotação</span>
-                      }
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const currentPage = rmaPages.find(p => p.id === currentPageId);
-  const totalPoints = Object.values(savedPoints).reduce((sum, points) => sum + points.length, 0);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, images.length]);
 
   return (
-    <div style={{
-      display: "flex",
-      minHeight: "100vh",
-      background: "#F5F5F5",
-      fontFamily: "Segoe UI, sans-serif",
-    }}>
+    <Wrapper>
       <Sidebar />
-      
-      <div style={{
-        marginLeft: "70px",
-        padding: "2rem",
-        width: "100%",
-        animation: "fadeIn 0.5s ease-in",
-      }}>
-        <div style={{
-          maxWidth: "1200px",
-          margin: "0 auto",
-          backgroundColor: "#FFFFFF",
-          borderRadius: "16px",
-          padding: "2rem",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.1)"
-        }}>
-          {/* Header */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '2rem',
-            paddingBottom: '1rem',
-            borderBottom: '2px solid #00C9A7'
-          }}>
+      <Content>
+        <Card>
+          <Header>
             <div>
-              <h1 style={{ 
-                margin: 0, 
-                color: '#025C4A', 
-                fontSize: '1.8rem',
-                fontWeight: '600',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}>
-                <FaFilePdf /> RMA Interactive - Sistema de Marcação
-              </h1>
-              <p style={{ margin: '0.5rem 0 0 0', color: '#333333' }}>
-                Sistema de marcação de pontos • Total: {totalPoints} pontos
-                {isLoading && <span style={{ color: '#037E63', marginLeft: '1rem' }}>⏳ Sincronizando...</span>}
-              </p>
+              <Title>RMA - 1</Title>
+              <Sub>Visualize as imagens em carrossel e clique para ampliar.</Sub>
             </div>
-            
-            {/* Controles principais */}
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <button
-                onClick={() => window.history.back()}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.7rem 1.3rem',
-                  backgroundColor: '#333333',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontWeight: 'bold',
-                  color: '#FFFFFF',
-                  transition: 'background 0.3s ease',
-                }}
-              >
-                <FaArrowLeft /> Voltar
-              </button>
-              
-              <button
-                onClick={loadPointsFromBackend}
-                disabled={isLoading}
-                style={{
-                  padding: '0.75rem 1.25rem',
-                  backgroundColor: isLoading ? '#333333' : '#029B7B',
-                  color: '#FFFFFF',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: isLoading ? 'not-allowed' : 'pointer',
-                  fontSize: '0.9rem',
-                  fontWeight: '500',
-                  opacity: isLoading ? 0.6 : 1
-                }}
-              >
-                {isLoading ? '⏳ Carregando...' : '🔄 Recarregar'}
-              </button>
-            </div>
-          </div>
+          </Header>
 
-          {/* Notification */}
-          {notification && (
-            <div style={{
-              padding: '1rem',
-              marginBottom: '1rem',
-              backgroundColor: notification.type === 'error' ? '#029B7B' : 
-                             notification.type === 'success' ? '#00C9A7' : '#037E63',
-              color: '#FFFFFF',
-              borderRadius: '8px',
-              border: `1px solid ${notification.type === 'error' ? '#025C4A' : 
-                                  notification.type === 'success' ? '#037E63' : '#029B7B'}`,
-              fontWeight: '500'
-            }}>
-              {notification.message}
-            </div>
-          )}
+          {/* 🟢 agora os botões realmente funcionam */}
+          <CarouselWrap>
+            <ArrowBtn onClick={() => scrollBy(-1)}>
+              <FaChevronLeft />
+            </ArrowBtn>
 
-          {/* Seletor de tipo de ponto - Design Clean */}
-          <div style={{
-            padding: '1rem',
-            backgroundColor: '#FFFFFF',
-            borderRadius: '12px',
-            marginBottom: '2rem',
-            border: '1px solid #e9ecef',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
-          }}>
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '1rem'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <span style={{ 
-                  color: '#025C4A', 
-                  fontSize: '1rem', 
-                  fontWeight: '500' 
-                }}>
-                  Tipo de Ponto:
-                </span>
-                <div style={{
-                  display: 'flex',
-                  backgroundColor: '#f8f9fa',
-                  borderRadius: '8px',
-                  padding: '4px',
-                  border: '1px solid #e9ecef'
-                }}>
-                  <button
-                    onClick={() => setSelectedPointType("PLUS")}
-                    style={{
-                      padding: '8px 16px',
-                      backgroundColor: selectedPointType === "PLUS" ? '#037E63' : 'transparent',
-                      color: selectedPointType === "PLUS" ? '#FFFFFF' : '#037E63',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '1rem',
-                      fontWeight: '600',
-                      transition: 'all 0.2s ease',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      minWidth: '60px',
-                      justifyContent: 'center'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (selectedPointType !== "PLUS") {
-                        e.target.style.backgroundColor = '#037E6315';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (selectedPointType !== "PLUS") {
-                        e.target.style.backgroundColor = 'transparent';
-                      }
+            <Track ref={trackRef}>
+              <Row>
+                {images.map((img, i) => (
+                  <Thumb
+                    key={i}
+                    onClick={() => {
+                      setCurrent(i);
+                      setOpen(true);
                     }}
                   >
-                    +
-                  </button>
-                  <button
-                    onClick={() => setSelectedPointType("X")}
-                    style={{
-                      padding: '8px 16px',
-                      backgroundColor: selectedPointType === "X" ? '#E74C3C' : 'transparent',
-                      color: selectedPointType === "X" ? '#FFFFFF' : '#E74C3C',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '1rem',
-                      fontWeight: '600',
-                      transition: 'all 0.2s ease',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      minWidth: '60px',
-                      justifyContent: 'center'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (selectedPointType !== "X") {
-                        e.target.style.backgroundColor = '#E74C3C15';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (selectedPointType !== "X") {
-                        e.target.style.backgroundColor = 'transparent';
-                      }
-                    }}
-                  >
-                    ×
-                  </button>
-                </div>
-              </div>
-              
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                fontSize: '0.9rem',
-                color: '#666'
-              }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  padding: '4px 8px',
-                  backgroundColor: selectedPointType === "PLUS" ? '#037E6315' : '#E74C3C15',
-                  borderRadius: '6px',
-                  border: `1px solid ${selectedPointType === "PLUS" ? '#037E63' : '#E74C3C'}20`
-                }}>
-                  <span style={{ 
-                    color: selectedPointType === "PLUS" ? '#037E63' : '#E74C3C',
-                    fontWeight: '600',
-                    fontSize: '1rem'
-                  }}>
-                    {selectedPointType === "PLUS" ? '+' : '×'}
-                  </span>
-                  <span style={{ color: '#666', fontSize: '0.85rem' }}>
-                    Selecionado
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
+                    <img src={img.src} alt={`Imagem ${i + 1}`} />
+                  </Thumb>
+                ))}
+              </Row>
+            </Track>
 
-          {/* Seletor de páginas */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '1rem',
-            marginBottom: '2rem'
-          }}>
-            {rmaPages.map(page => {
-              const pointCount = savedPoints[page.id]?.length || 0;
-              const plusCount = savedPoints[page.id]?.filter(p => p.format === "PLUS").length || 0;
-              const xCount = savedPoints[page.id]?.filter(p => p.format === "X").length || 0;
-              const isActive = page.id === currentPageId;
-              
-              return (
-                <button
-                  key={page.id}
-                  onClick={() => setCurrentPageId(page.id)}
-                  style={{
-                    padding: '1rem',
-                    backgroundColor: isActive ? '#037E63' : '#FFFFFF',
-                    color: isActive ? '#FFFFFF' : '#025C4A',
-                    border: isActive ? 'none' : '1px solid #00C9A7',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '0.95rem',
-                    fontWeight: '500',
-                    textAlign: 'left',
-                    transition: 'all 0.3s ease',
-                    boxShadow: isActive ? '0 2px 8px rgba(0,0,0,0.1)' : 'none',
-                    transform: isActive ? 'translateY(-2px)' : 'none'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) {
-                      e.target.style.backgroundColor = '#F5F5F5';
-                      e.target.style.transform = 'translateY(-2px)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) {
-                      e.target.style.backgroundColor = '#FFFFFF';
-                      e.target.style.transform = 'none';
-                    }
-                  }}
-                >
-                  <FaFilePdf style={{ marginRight: '0.5rem' }} />
-                  {page.title}
-                  {pointCount > 0 && (
-                    <div style={{
-                      marginTop: '0.5rem',
-                      fontSize: '0.8rem',
-                      opacity: 0.8
-                    }}>
-                      📍 {pointCount} ponto{pointCount !== 1 ? 's' : ''}
-                      {(plusCount > 0 || xCount > 0) && (
-                        <div style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
-                          {plusCount > 0 && <span style={{ color: isActive ? '#FFFFFF' : '#037E63' }}>+{plusCount}</span>}
-                          {plusCount > 0 && xCount > 0 && ' '}
-                          {xCount > 0 && <span style={{ color: isActive ? '#FFFFFF' : '#E74C3C' }}>×{xCount}</span>}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+            <ArrowBtn onClick={() => scrollBy(1)}>
+              <FaChevronRight />
+            </ArrowBtn>
+          </CarouselWrap>
 
-          {/* Visualização da imagem atual */}
-          <div style={{
-            backgroundColor: '#F5F5F5',
-            borderRadius: '12px',
-            padding: '2rem',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center'
-          }}>
-            <h2 style={{ 
-              display: 'flex',
-              alignItems: 'center',
-              fontSize: '1.4rem',
-              fontWeight: '600',
-              color: '#025C4A',
-              marginBottom: '1rem',
-              gap: '0.6rem'
-            }}>
-              <FaFilePdf /> {currentPage?.title}
-            </h2>
-            <p style={{ 
-              color: '#333333', 
-              marginBottom: '1.5rem',
-              fontSize: '1rem',
-              textAlign: 'center'
-            }}>
-              Clique na imagem para marcar pontos • Clique nos pontos para removê-los
-            </p>
-            
-            <InteractiveImage page={currentPage} />
-            <PointsPanel pageId={currentPageId} />
-            <AnnotationModal
-              open={annotationModal.open}
-              point={annotationModal.point}
-              onClose={() => setAnnotationModal({ open: false, point: null, pageId: null })}
-              onSave={text => saveAnnotation(annotationModal.pageId, annotationModal.point, text)}
+          <Viewer>
+            <MainImage
+              src={images[current].src}
+              alt={`Imagem ${current + 1}`}
+              onClick={() => setOpen(true)}
             />
-          </div>
-        </div>
-      </div>
-    </div>
+          </Viewer>
+        </Card>
+
+        {open && (
+          <Backdrop onClick={() => setOpen(false)}>
+            <Lightbox onClick={(e) => e.stopPropagation()}>
+              <LightboxTop>
+                <span>
+                  Imagem {current + 1} / {images.length}
+                </span>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <ArrowBtn
+                    onClick={() =>
+                      setCurrent((c) => clamp(c - 1, 0, images.length - 1))
+                    }
+                  >
+                    <FaChevronLeft />
+                  </ArrowBtn>
+                  <ArrowBtn
+                    onClick={() =>
+                      setCurrent((c) => clamp(c + 1, 0, images.length - 1))
+                    }
+                  >
+                    <FaChevronRight />
+                  </ArrowBtn>
+                  <Close onClick={() => setOpen(false)}>
+                    <FaTimes />
+                  </Close>
+                </div>
+              </LightboxTop>
+
+              <LightboxBody>
+                <LightboxImg
+                  src={images[current].src}
+                  alt={`Imagem ${current + 1}`}
+                />
+              </LightboxBody>
+            </Lightbox>
+          </Backdrop>
+        )}
+      </Content>
+    </Wrapper>
   );
 }

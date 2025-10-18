@@ -2,8 +2,8 @@
 import axios from 'axios';
 
 const api = axios.create({
-  //baseURL: 'https://api-nelmara-ribeiro.site/api',
-  baseURL: 'http://localhost:5173/api'
+  baseURL: 'https://api-nelmara-ribeiro.site/api',
+  //baseURL: 'http://localhost:5173/api'
 });
 
 api.interceptors.request.use(config => {
